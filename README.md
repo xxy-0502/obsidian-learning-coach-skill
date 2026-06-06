@@ -272,6 +272,34 @@ LearningVault/inbox/converted/example/images/
 
 如果你显式传入 `--output`，则会使用你指定的 Markdown 路径，并把图片资源解到该 Markdown 所在目录下。
 
+如果 PDF 页数超过 MinerU 单次解析限制，脚本会默认按 `180` 页自动切分：
+
+```powershell
+python scripts/convert_to_markdown.py `
+  --input "LearningVault/inbox/待处理资料/big-book.pdf" `
+  --vault "LearningVault" `
+  --split-pages 180
+```
+
+输出结构：
+
+```text
+LearningVault/inbox/converted/big-book/
+├─ full.md
+├─ parts/
+│  ├─ part_001.pdf
+│  ├─ part_001/
+│  │  └─ full.md
+│  ├─ part_002.pdf
+│  └─ part_002/
+│     └─ full.md
+└─ images/
+   ├─ part_001/
+   └─ part_002/
+```
+
+合并后的 `full.md` 会按 part 标注页码范围。若你不想自动切分，可以加 `--no-auto-split`。
+
 ## 常见用法
 
 ### 学一个新主题

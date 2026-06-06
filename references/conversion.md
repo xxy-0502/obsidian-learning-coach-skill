@@ -34,6 +34,15 @@ LearningVault/inbox/converted/my-paper/full.md
 LearningVault/inbox/converted/my-paper/images/
 ```
 
+Large PDFs:
+
+- MinerU precise API can reject PDFs above its page limit.
+- The converter auto-splits oversized PDFs by default with `--split-pages 180`.
+- Part PDFs and part Markdown are saved under `LearningVault/inbox/converted/[source-name]/parts/`.
+- The merged readable source remains `LearningVault/inbox/converted/[source-name]/full.md`.
+- Part image links are rewritten into `images/part_001/`, `images/part_002/`, etc. to avoid filename collisions.
+- Use `--no-auto-split` to disable splitting.
+
 Behavior:
 
 - `.md` and `.txt`: return the original path or copy it to the requested output.
