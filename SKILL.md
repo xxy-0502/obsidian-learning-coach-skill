@@ -31,6 +31,8 @@ Use Route A when the user gives only a topic. Start from general knowledge, do n
 
 Use Route B when the user provides a PDF, webpage, GitHub repo, document, image, pasted text, or existing note. Convert complex files to Markdown when needed, build `sources/来源索引.md`, and ground lessons and notes in the provided material. Mark any supplement not covered by the material as "资料外补充".
 
+For source-first learning, keep raw files and converted files separate. Raw user material belongs in `LearningVault/inbox/待处理资料/`. Converted material belongs in `LearningVault/inbox/converted/[source-name]/full.md` with related media in the same converted source directory. After conversion, read `full.md` as the primary learning source and record both the raw-file path and converted Markdown path in the source index. If a user provides an already-readable `.md` or `.txt`, read that file directly and record its path.
+
 Use Review Route when the user asks about due reviews, reviewing a topic, missed points, or time since last study. Prefer active recall before re-reading.
 
 Use Conversion Route when the user only asks to convert material to Markdown. Do not begin the learning workflow unless they also ask to learn from it.

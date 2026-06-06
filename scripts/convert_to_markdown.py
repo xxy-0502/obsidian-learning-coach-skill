@@ -5,11 +5,15 @@ import argparse
 import os
 import shutil
 import sys
+import time
+import zipfile
+from io import BytesIO
 from pathlib import Path
 
 
 TEXT_EXTS = {".md", ".markdown", ".txt"}
 COMPLEX_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".doc", ".docx", ".ppt", ".pptx"}
+RESOURCE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".bmp", ".tif", ".tiff"}
 
 
 def load_env_file(path: Path) -> dict[str, str]:
@@ -33,10 +37,24 @@ def load_config(vault: Path, explicit_env: str | None) -> dict[str, str]:
     candidates.extend([vault / "settings" / ".env", Path.cwd() / "settings" / ".env"])
     for path in candidates:
         config.update({k: v for k, v in load_env_file(path).items() if v})
-    for key in ["MINERU_API_KEY", "MARKDOWN_CONVERTER", "MINERU_API_URL"]:
+    for key in [
+        "MINERU_API_KEY",
+        "MINERU_TOKEN",
+        "MARKDOWN_CONVERTER",
+        "MINERU_API_BASE",
+        "MINERU_API_URL",
+        "MINERU_LANGUAGE",
+        "MINERU_ENABLE_TABLE",
+        "MINERU_ENABLE_FORMULA",
+        "MINERU_IS_OCR",
+        "MINERU_MODEL_VERSION",
+        "MINERU_POLL_COUNT",
+        "MINERU_POLL_INTERVAL",
+    ]:
         if os.environ.get(key):
             config[key] = os.environ[key]
-    config.setdefault("MARKDOWN_CONVERTER", "mineru")
+    config.setdefault("MARKDOWN_CONVERTER", "mineru-precise")
+    config.setdefault("MINERU_API_BASE", "https://mineru.net")
     return config
 
 
@@ -49,42 +67,177 @@ def copy_text_input(src: Path, output: Path | None, vault: Path) -> Path:
     return output
 
 
-def mineru_convert(src: Path, output: Path, config: dict[str, str]) -> tuple[bool, str]:
-    api_key = config.get("MINERU_API_KEY")
-    if not api_key:
-        return False, (
-            "Missing MINERU_API_KEY. Configure LearningVault/settings/.env, pass --env, "
-            "set the system environment variable, provide Markdown/text, or continue only with readable text."
-        )
-    api_url = config.get("MINERU_API_URL")
-    if not api_url:
-        return False, (
-            "MINERU_API_KEY is set, but this script needs MINERU_API_URL for the current MinerU endpoint. "
-            "Add MINERU_API_URL to the env file or patch mineru_convert() to match your MinerU deployment."
-        )
+def default_output_path(src: Path, vault: Path) -> Path:
+    return vault / "inbox" / "converted" / src.stem / "full.md"
+
+
+def mineru_agent_convert(src: Path, output: Path, config: dict[str, str]) -> tuple[bool, str]:
+    api_base = config.get("MINERU_API_BASE", "https://mineru.net").rstrip("/")
+    create_url = config.get("MINERU_API_URL") or f"{api_base}/api/v1/agent/parse/file"
     try:
         import requests  # type: ignore
     except Exception:
-        return False, "The requests package is required for MinerU API conversion."
+        return False, "The requests package is required for MinerU Agent API conversion."
+
+    payload = {
+        "file_name": src.name,
+        "language": config.get("MINERU_LANGUAGE", "ch"),
+        "enable_table": config.get("MINERU_ENABLE_TABLE", "true").lower() != "false",
+        "is_ocr": config.get("MINERU_IS_OCR", "false").lower() == "true",
+        "enable_formula": config.get("MINERU_ENABLE_FORMULA", "true").lower() != "false",
+    }
+    if config.get("MINERU_PAGE_RANGE"):
+        payload["page_range"] = config["MINERU_PAGE_RANGE"]
+
+    response = requests.post(create_url, json=payload, timeout=60)
+    if response.status_code >= 400:
+        return False, f"MinerU task creation failed with HTTP {response.status_code}: {response.text[:500]}"
+    data = response.json()
+    if data.get("code") != 0:
+        return False, f"MinerU task creation failed: {data.get('msg') or data}"
+    task = data.get("data", {})
+    task_id = task.get("task_id")
+    file_url = task.get("file_url")
+    if not task_id or not file_url:
+        return False, f"MinerU response did not include task_id/file_url: {data}"
+
+    # Signed OSS upload URL must be used exactly as returned by MinerU.
+    with src.open("rb") as fh:
+        upload_response = requests.put(file_url, data=fh, timeout=120)
+    if upload_response.status_code >= 400:
+        return False, f"MinerU file upload failed with HTTP {upload_response.status_code}: {upload_response.text[:500]}"
+
+    result_url = f"{api_base}/api/v1/agent/parse/{task_id}"
+    for _ in range(int(config.get("MINERU_POLL_COUNT", "60"))):
+        result_response = requests.get(result_url, timeout=30)
+        if result_response.status_code >= 400:
+            return False, f"MinerU result query failed with HTTP {result_response.status_code}: {result_response.text[:500]}"
+        result = result_response.json()
+        result_data = result.get("data", {})
+        state = result_data.get("state")
+        if state == "done":
+            markdown_url = result_data.get("markdown_url")
+            if not markdown_url:
+                return False, f"MinerU result is done but markdown_url is missing: {result}"
+            markdown_response = requests.get(markdown_url, timeout=60)
+            if markdown_response.status_code >= 400:
+                return False, f"MinerU Markdown download failed with HTTP {markdown_response.status_code}: {markdown_response.text[:500]}"
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(markdown_response.text, encoding="utf-8")
+            return True, str(output)
+        if state == "failed":
+            return False, f"MinerU parsing failed: {result_data.get('err_msg') or result}"
+        time.sleep(float(config.get("MINERU_POLL_INTERVAL", "2")))
+    return False, f"MinerU parsing did not finish before timeout. task_id={task_id}"
+
+
+def extract_mineru_zip(zip_bytes: bytes, output: Path, preferred_stem: str) -> None:
+    with zipfile.ZipFile(BytesIO(zip_bytes)) as archive:
+        names = archive.namelist()
+        preferred = [
+            name for name in names
+            if name.endswith("/full.md") or name == "full.md" or name.endswith(f"/{preferred_stem}.md")
+        ]
+        markdown_names = preferred or [name for name in names if name.lower().endswith(".md")]
+        if not markdown_names:
+            raise ValueError("MinerU result zip did not contain a Markdown file.")
+        with archive.open(markdown_names[0]) as fh:
+            markdown = fh.read().decode("utf-8")
+
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(markdown, encoding="utf-8")
+
+        for name in names:
+            if name.endswith("/") or Path(name).suffix.lower() not in RESOURCE_EXTS:
+                continue
+            target = (output.parent / name).resolve()
+            if not str(target).startswith(str(output.parent.resolve())):
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with archive.open(name) as src, target.open("wb") as dst:
+                shutil.copyfileobj(src, dst)
+
+
+def bearer_headers(config: dict[str, str]) -> dict[str, str]:
+    token = config.get("MINERU_TOKEN") or config.get("MINERU_API_KEY")
+    if not token:
+        raise ValueError(
+            "Missing MINERU_TOKEN. Configure LearningVault/settings/.env, pass --env, "
+            "set a system environment variable, provide Markdown/text, or switch to MARKDOWN_CONVERTER=mineru-agent."
+        )
+    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+
+def mineru_precise_convert(src: Path, output: Path, config: dict[str, str]) -> tuple[bool, str]:
+    api_base = config.get("MINERU_API_BASE", "https://mineru.net").rstrip("/")
+    create_url = config.get("MINERU_API_URL") or f"{api_base}/api/v4/file-urls/batch"
+    try:
+        import requests  # type: ignore
+    except Exception:
+        return False, "The requests package is required for MinerU precise API conversion."
+
+    try:
+        headers = bearer_headers(config)
+    except ValueError as exc:
+        return False, str(exc)
+
+    payload = {
+        "enable_formula": config.get("MINERU_ENABLE_FORMULA", "true").lower() != "false",
+        "enable_table": config.get("MINERU_ENABLE_TABLE", "true").lower() != "false",
+        "language": config.get("MINERU_LANGUAGE", "ch"),
+        "model_version": config.get("MINERU_MODEL_VERSION", "vlm"),
+        "files": [
+            {
+                "name": src.name,
+                "is_ocr": config.get("MINERU_IS_OCR", "false").lower() == "true",
+            }
+        ],
+    }
+
+    response = requests.post(create_url, headers=headers, json=payload, timeout=60)
+    if response.status_code >= 400:
+        return False, f"MinerU precise task creation failed with HTTP {response.status_code}: {response.text[:500]}"
+    data = response.json()
+    if data.get("code") not in {0, "0", None}:
+        return False, f"MinerU precise task creation failed: {data.get('msg') or data}"
+    task_data = data.get("data", {})
+    batch_id = task_data.get("batch_id")
+    file_urls = task_data.get("file_urls") or task_data.get("file_url") or []
+    if isinstance(file_urls, str):
+        file_urls = [file_urls]
+    if not batch_id or not file_urls:
+        return False, f"MinerU response did not include batch_id/file_urls: {data}"
 
     with src.open("rb") as fh:
-        response = requests.post(
-            api_url,
-            headers={"Authorization": f"Bearer {api_key}"},
-            files={"file": (src.name, fh)},
-            timeout=120,
-        )
-    if response.status_code >= 400:
-        return False, f"MinerU request failed with HTTP {response.status_code}: {response.text[:500]}"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    text = response.text
-    try:
-        data = response.json()
-        text = data.get("markdown") or data.get("content") or response.text
-    except Exception:
-        pass
-    output.write_text(text, encoding="utf-8")
-    return True, str(output)
+        upload_response = requests.put(file_urls[0], data=fh, timeout=180)
+    if upload_response.status_code >= 400:
+        return False, f"MinerU precise file upload failed with HTTP {upload_response.status_code}: {upload_response.text[:500]}"
+
+    result_url = f"{api_base}/api/v4/extract-results/batch/{batch_id}"
+    for _ in range(int(config.get("MINERU_POLL_COUNT", "120"))):
+        result_response = requests.get(result_url, headers=headers, timeout=30)
+        if result_response.status_code >= 400:
+            return False, f"MinerU precise result query failed with HTTP {result_response.status_code}: {result_response.text[:500]}"
+        result = result_response.json()
+        result_data = result.get("data", {})
+        results = result_data.get("extract_result") or result_data.get("extract_results") or result_data.get("results") or []
+        if isinstance(results, dict):
+            results = [results]
+        item = results[0] if results else result_data
+        state = item.get("state") or result_data.get("state")
+        if state == "done":
+            zip_url = item.get("full_zip_url") or item.get("zip_url") or result_data.get("full_zip_url")
+            if not zip_url:
+                return False, f"MinerU precise result is done but full_zip_url is missing: {result}"
+            zip_response = requests.get(zip_url, timeout=120)
+            if zip_response.status_code >= 400:
+                return False, f"MinerU precise zip download failed with HTTP {zip_response.status_code}: {zip_response.text[:500]}"
+            extract_mineru_zip(zip_response.content, output, src.stem)
+            return True, str(output)
+        if state == "failed":
+            return False, f"MinerU precise parsing failed: {item.get('err_msg') or item.get('message') or result}"
+        time.sleep(float(config.get("MINERU_POLL_INTERVAL", "3")))
+    return False, f"MinerU precise parsing did not finish before timeout. batch_id={batch_id}"
 
 
 def main() -> None:
@@ -101,7 +254,7 @@ def main() -> None:
         print(f"Input not found: {src}", file=sys.stderr)
         sys.exit(2)
 
-    output = Path(args.output) if args.output else vault / "inbox" / "待处理资料" / f"{src.stem}.md"
+    output = Path(args.output) if args.output else default_output_path(src, vault)
     ext = src.suffix.lower()
     if ext in TEXT_EXTS:
         result = copy_text_input(src, output if args.output else None, vault)
@@ -112,10 +265,14 @@ def main() -> None:
         sys.exit(3)
 
     config = load_config(vault, args.env)
-    if config.get("MARKDOWN_CONVERTER", "mineru").lower() != "mineru":
+    converter = config.get("MARKDOWN_CONVERTER", "mineru-precise").lower()
+    if converter in {"mineru", "mineru-agent", "mineru_agent"}:
+        ok, message = mineru_agent_convert(src, output, config)
+    elif converter in {"mineru-precise", "mineru_precise"}:
+        ok, message = mineru_precise_convert(src, output, config)
+    else:
         print(f"Unsupported MARKDOWN_CONVERTER: {config.get('MARKDOWN_CONVERTER')}", file=sys.stderr)
         sys.exit(4)
-    ok, message = mineru_convert(src, output, config)
     print(message)
     if not ok:
         sys.exit(5)

@@ -21,20 +21,27 @@ Do not invent sources. For time-sensitive or high-risk content, recommend verifi
 Use when the user provides PDF, image, Office file, webpage, GitHub repo, pasted text, or existing notes.
 
 1. Initialize the vault.
-2. Convert complex files with `scripts/convert_to_markdown.py` when needed.
-3. Read the converted Markdown or provided text.
-4. Ask the start assessment unless the user already answered it or asked to begin directly.
-5. If assessment answers are missing, stop after asking the four questions; do not create the first lesson yet.
-6. Initialize the topic with `scripts/init_topic.py --mode source-first`.
-7. Record assessment answers that are specific to this topic in `progress/[主题]/进度.md`.
-8. If the answers include stable learner preferences, ask whether to update `settings/background.md` unless the user explicitly asked to update it.
-9. Build `notes/[主题]/sources/来源索引.md`.
-10. Create the first lesson and concept notes grounded in the supplied material.
-11. Mark material outside the supplied source as `资料外补充`.
+2. Put raw local material under `LearningVault/inbox/待处理资料/` when the user has not specified another location.
+3. Convert complex files with `scripts/convert_to_markdown.py` when needed.
+4. Use the converted source at `LearningVault/inbox/converted/[source-name]/full.md` as the primary source. Related media stay in the same converted source directory, such as `images/`.
+5. If the user provides readable `.md`, `.txt`, pasted text, webpage text, or an existing note, read that directly instead of reconverting.
+6. Ask the start assessment unless the user already answered it or asked to begin directly.
+7. If assessment answers are missing, stop after asking the four questions; do not create the first lesson yet.
+8. Initialize the topic with `scripts/init_topic.py --mode source-first`.
+9. Record assessment answers that are specific to this topic in `progress/[主题]/进度.md`.
+10. If the answers include stable learner preferences, ask whether to update `settings/background.md` unless the user explicitly asked to update it.
+11. Build `notes/[主题]/sources/来源索引.md`, recording the raw source path and the converted Markdown path when both exist.
+12. Create the first lesson and concept notes grounded in the supplied material.
+13. Mark material outside the supplied source as `资料外补充`.
 
 ## Conversion Route
 
-Use when the user asks only to convert a file to Markdown. Run conversion and return the Markdown path or a clear configuration prompt. Do not start lessons.
+Use when the user asks only to convert a file to Markdown.
+
+1. Run conversion.
+2. Return the converted Markdown path, usually `LearningVault/inbox/converted/[source-name]/full.md`.
+3. Mention related media directory when present.
+4. Do not start lessons unless the user also asks to learn from it.
 
 ## Review Route
 

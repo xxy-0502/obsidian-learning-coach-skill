@@ -1,1 +1,371 @@
-# obsidian-learning-coach-skill
+# Obsidian Learning Coach Skill
+
+Obsidian Learning Coach 是一个面向 Codex 的学习教练 Skill。它可以把“我想学一个主题”“我想读懂一份资料”“今天该复习什么”这类需求，整理成 Obsidian 友好的 Markdown 笔记、学习进度、错题遗漏和间隔复习计划。
+
+它默认用中文教学，必要时提供中英双语术语，适合希望长期维护个人知识库、复盘学习过程、并把 AI 辅助学习沉淀到 Obsidian 的用户。
+
+## 项目简介
+
+这个项目不是一个单纯的问答提示词，而是一套完整的学习工作流：
+
+- 先了解你的学习背景、目标和当前基础。
+- 再按主题或资料生成一课一课的学习内容。
+- 同步写入 Obsidian Markdown 笔记。
+- 用主动回忆检查你是否真的掌握。
+- 把没掌握的点记录为错题和遗漏。
+- 自动维护后续复习计划。
+
+默认知识库目录是 `LearningVault/`。你可以直接把它作为 Obsidian vault 打开，也可以指定自己的 vault 路径。
+
+## 它能干什么
+
+- 主题学习：输入“我想学 X”“教我 X”，它会从学习起点评估开始，逐步生成课程、概念笔记和知识地图。
+- 资料学习：基于 PDF、网页、GitHub 仓库、Office 文档、图片、粘贴文本或已有笔记学习。
+- Markdown 转换：把复杂资料转换成适合 Obsidian 管理的 Markdown。
+- 来源索引：资料优先学习时，会维护 `sources/来源索引.md`，区分资料内信息和资料外补充。
+- 概念笔记：把可复用概念写入 `concepts/`，并使用 Obsidian 双链连接相关概念。
+- 课程笔记：把每次学习内容写入 `lessons/`，包含目标、讲解、例子和主动回忆问题。
+- 知识地图：维护 `maps/知识地图.md`，帮助看清概念关系。
+- 掌握度判断：通过小测、复述、例子和追问判断是否可以进入下一课。
+- 错题遗漏追踪：把理解错误、遗漏条件、混淆点记录到 `错题与遗漏.md`。
+- 间隔复习：维护 `复习计划.md`，支持到期复习、复习记录和下次复习日期。
+- 个性化学习：根据 `settings/background.md` 和 `settings/glossary.md` 调整讲解深度、例子风格和术语翻译。
+
+## 核心优点
+
+- 不只回答问题，而是维护长期学习系统。
+- 不一次性生成完整课程，默认一课一课推进，避免信息过载。
+- 优先主动回忆，而不是让你只被动阅读。
+- 能追踪“我学到哪了、哪里没掌握、什么时候该复习”。
+- 适合 Obsidian 工作流，支持双链、标签、知识地图和来源索引。
+- 支持主题优先和资料优先两种学习方式。
+- 尊重来源边界，不伪造论文、URL、页码或精确引用。
+- 高风险主题会明确限制为概念学习，不替代专业建议。
+
+## 采用的学习方法
+
+这个 Skill 的设计不是“把资料总结一遍”就结束，而是结合了几种更适合长期学习的策略：
+
+- 掌握学习：每次只推进一个小单元，通过复述、例子和检查题判断是否掌握；如果前置概念没懂，就先补齐再继续。
+- 主动回忆：复习时先让学习者尝试自己解释、举例和回答问题，再根据回答纠偏，而不是一开始就重读笔记。
+- 间隔重复：把已学内容写入 `复习计划.md`，按 1 天、3 天、7 天、14 天、30 天等间隔安排复习。
+- 苏格拉底式提问：遇到卡点时不直接灌答案，而是用追问帮助学习者暴露假设、补全条件、重建理解。
+- 费曼式解释：讲解时优先用朴素语言、类比和具体例子，把复杂概念拆到可以复述的程度。
+- 错题与遗漏追踪：把理解错误、漏掉的关键条件、容易混淆的概念记录到 `错题与遗漏.md`，后续复习优先处理。
+- 来源约束学习：资料学习时优先基于 `converted/[资料名]/full.md`，资料外内容会明确标注为补充，避免把生成解释误当作来源证据。
+- 个性化脚手架：读取 `background.md` 和 `glossary.md`，根据学习目标、背景、术语偏好和例子风格调整讲解。
+
+## 目录结构
+
+```text
+obsidian-learning-coach/
+├─ SKILL.md
+├─ README.md
+├─ LICENSE
+├─ agents/
+│  └─ openai.yaml
+├─ references/
+│  ├─ workflow.md
+│  ├─ obsidian-note-format.md
+│  ├─ mastery-and-review.md
+│  ├─ source-grounding.md
+│  ├─ conversion.md
+│  ├─ glossary.md
+│  └─ personalization.md
+└─ scripts/
+   ├─ init_vault.py
+   ├─ init_topic.py
+   ├─ convert_to_markdown.py
+   ├─ scan_due_reviews.py
+   ├─ update_review_plan.py
+   └─ extract_glossary.py
+```
+
+## 安装教程
+
+### 方式一：作为 Codex Skill 使用
+
+把本仓库放到你的 Codex skills 目录下，例如：
+
+```text
+C:\Users\<你的用户名>\.codex\skills\obsidian-learning-coach
+```
+
+确认目录中包含：
+
+```text
+SKILL.md
+README.md
+references/
+scripts/
+agents/
+```
+
+然后在 Codex 中使用：
+
+```text
+使用 $obsidian-learning-coach，我想学机器学习
+```
+
+或直接说：
+
+```text
+我想学机器学习
+```
+
+如果 Codex 已识别该 skill，它会自动进入 Obsidian 学习教练流程。
+
+### 方式二：从 GitHub 克隆
+
+```powershell
+git clone https://github.com/xxy-0502/obsidian-learning-coach-skill.git
+cd obsidian-learning-coach-skill
+```
+
+如果你要让 Codex 直接识别它，请把克隆后的目录放入 Codex skills 目录，或根据你的 Codex 配置将该目录加入可用 skills。
+
+## 初始化 Obsidian 学习库
+
+通常不需要手动初始化。你可以直接在 Codex 里说：
+
+```text
+使用 $obsidian-learning-coach，我想学机器学习
+```
+
+或：
+
+```text
+我想学机器学习
+```
+
+Skill 会先检查默认的 `LearningVault/` 是否存在；如果不存在，会自动调用初始化流程创建学习库，再继续进入学习起点评估和第一课准备。
+
+如果你想提前创建学习库，或想指定 vault 路径，也可以手动运行脚本。
+
+在项目根目录运行：
+
+```powershell
+python scripts/init_vault.py --vault LearningVault
+```
+
+脚本会创建：
+
+```text
+LearningVault/
+├─ settings/
+│  ├─ background.md
+│  ├─ glossary.md
+│  └─ .env.example
+├─ notes/
+├─ progress/
+└─ inbox/
+   ├─ 待处理资料/
+   └─ converted/
+```
+
+你可以用 Obsidian 打开 `LearningVault/`，后续学习生成的课程、概念、复习记录都会写入这里。
+
+## API 配置教程
+
+API 配置主要用于把 PDF、图片、Office 文档等复杂资料转换为 Markdown。普通 `.md` 和 `.txt` 文件不需要 API。
+
+当前转换脚本默认使用 MinerU 精准解析 API，也就是需要 Token 的版本：
+
+```env
+MARKDOWN_CONVERTER=mineru-precise
+MINERU_API_BASE=https://mineru.net
+MINERU_TOKEN=你的_MinerU_Token
+MINERU_LANGUAGE=ch
+MINERU_MODEL_VERSION=vlm
+```
+
+你不需要单独找 `MINERU_API_URL`。脚本会根据 `MINERU_API_BASE=https://mineru.net` 自动调用 MinerU 精准解析的本地文件接口：
+
+- 创建批量文件任务：`POST /api/v4/file-urls/batch`
+- 查询解析结果：`GET /api/v4/extract-results/batch/{batch_id}`
+
+精准解析流程是异步的：先用 Token 创建任务，MinerU 返回 `batch_id` 和临时签名上传地址 `file_urls`；脚本把本地文件 `PUT` 到这个地址，然后轮询解析结果，拿到 `full_zip_url` 后下载 zip，并从里面提取 `full.md` 写成最终 Markdown。
+
+Token 获取位置：登录 MinerU 后进入 API 管理页面，在 Token/API Key 管理处创建或复制 Token。不要把 Token 提交到 Git 仓库。
+
+### 1. 创建 `.env`
+
+初始化 vault 后，复制示例文件：
+
+```powershell
+Copy-Item LearningVault\settings\.env.example LearningVault\settings\.env
+```
+
+然后编辑：
+
+```text
+LearningVault/settings/.env
+```
+
+填入：
+
+```env
+MARKDOWN_CONVERTER=mineru-precise
+MINERU_API_BASE=https://mineru.net
+MINERU_TOKEN=你的_MinerU_Token
+MINERU_LANGUAGE=ch
+MINERU_MODEL_VERSION=vlm
+```
+
+### 2. 配置说明
+
+- `MARKDOWN_CONVERTER`：转换器名称，目前默认是 `mineru-precise`。
+- `MINERU_API_BASE`：MinerU API 基础地址，默认是 `https://mineru.net`。
+- `MINERU_TOKEN`：MinerU 精准解析 API Token。脚本也兼容读取 `MINERU_API_KEY`。
+- `MINERU_LANGUAGE`：文档语言，中文资料建议用 `ch`。
+- `MINERU_MODEL_VERSION`：解析模型版本，默认 `vlm`。
+- `MINERU_API_URL`：一般不需要配置。它只作为兼容字段，用来覆盖创建任务接口；默认会使用 `https://mineru.net/api/v4/file-urls/batch`。
+- `MINERU_ENABLE_TABLE`：是否解析表格，默认 `true`。
+- `MINERU_ENABLE_FORMULA`：是否解析公式，默认 `true`。
+- `MINERU_IS_OCR`：是否强制 OCR，默认 `false`。
+
+如果你想改用不需要 Token 的轻量解析接口，可以设置：
+
+```env
+MARKDOWN_CONVERTER=mineru-agent
+```
+
+### 3. 配置查找顺序
+
+`scripts/convert_to_markdown.py` 会按以下顺序读取配置：
+
+1. 命令行传入的 `--env` 文件。
+2. `LearningVault/settings/.env`。
+3. 当前目录下的 `settings/.env`。
+4. 系统环境变量。
+
+系统环境变量支持：
+
+```text
+MARKDOWN_CONVERTER
+MINERU_API_BASE
+MINERU_TOKEN
+MINERU_API_KEY
+MINERU_LANGUAGE
+MINERU_MODEL_VERSION
+MINERU_ENABLE_TABLE
+MINERU_ENABLE_FORMULA
+MINERU_IS_OCR
+```
+
+### 4. 测试资料转换
+
+```powershell
+python scripts/convert_to_markdown.py `
+  --input "LearningVault/inbox/待处理资料/example.pdf" `
+  --vault "LearningVault"
+```
+
+如果 MinerU API 调用失败，你也可以直接提供 Markdown 或纯文本资料，跳过复杂文件转换。
+
+默认输出不会和原始 PDF 混在一起，而是放到独立目录：
+
+```text
+LearningVault/inbox/converted/example/full.md
+LearningVault/inbox/converted/example/images/
+```
+
+如果你显式传入 `--output`，则会使用你指定的 Markdown 路径，并把图片资源解到该 Markdown 所在目录下。
+
+## 常见用法
+
+### 学一个新主题
+
+```text
+使用 $obsidian-learning-coach，我想学 Transformer
+```
+
+Skill 会先询问：
+
+- 你现在知道什么？
+- 学习目的是什么？
+- 希望达到什么程度？
+- 偏好什么学习方式？
+
+如果你想跳过评估，可以说：
+
+```text
+不要问，直接开始
+```
+
+### 从资料学习
+
+```text
+使用 $obsidian-learning-coach，帮我学习这个 PDF，并整理成 Obsidian 笔记
+```
+
+它会优先把资料转换为 Markdown，再建立来源索引、课程笔记、概念笔记和知识地图。
+
+### 只转换 Markdown
+
+```text
+把这个 PDF 转成 Markdown，不用开始教学
+```
+
+这会走转换流程，不会自动生成课程。
+
+### 复习
+
+```text
+今天该复习什么？
+```
+
+或：
+
+```text
+复习 Transformer
+```
+
+Skill 会优先用主动回忆，而不是让你先看答案。
+
+## 默认学习库结构
+
+```text
+LearningVault/
+├─ settings/
+│  ├─ background.md
+│  ├─ glossary.md
+│  └─ .env
+├─ notes/
+│  └─ [主题]/
+│     ├─ index.md
+│     ├─ concepts/
+│     ├─ lessons/
+│     ├─ maps/
+│     │  └─ 知识地图.md
+│     └─ sources/
+│        └─ 来源索引.md
+├─ progress/
+│  └─ [主题]/
+│     ├─ 进度.md
+│     ├─ 错题与遗漏.md
+│     └─ 复习计划.md
+└─ inbox/
+   ├─ 待处理资料/
+   └─ converted/
+      └─ [资料名]/
+         ├─ full.md
+         └─ images/
+```
+
+## 内置脚本
+
+- `scripts/init_vault.py`：初始化 Obsidian 学习库。
+- `scripts/init_topic.py`：初始化某个学习主题。
+- `scripts/convert_to_markdown.py`：把资料转换为 Markdown。
+- `scripts/scan_due_reviews.py`：扫描到期复习内容。
+- `scripts/update_review_plan.py`：更新复习计划和复习记录。
+- `scripts/extract_glossary.py`：从笔记或资料中辅助提取术语。
+
+## 注意事项
+
+- 医疗、法律、金融、安全等高风险主题仅用于概念学习，不构成专业建议。
+- 资料学习会尽量基于用户提供的资料，不会编造来源。
+- 如果资料外补充知识，会明确标注为资料外补充。
+- `settings/background.md` 属于私人学习背景，不会被复制进公开知识笔记。
+- 如果 MinerU API 形式发生变化，可以调整 `scripts/convert_to_markdown.py` 中的转换逻辑。

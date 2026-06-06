@@ -28,8 +28,11 @@ GLOSSARY = """# 术语表
 | --- | --- | --- | --- | --- |
 """
 
-ENV_EXAMPLE = """MINERU_API_KEY=
-MARKDOWN_CONVERTER=mineru
+ENV_EXAMPLE = """MARKDOWN_CONVERTER=mineru-precise
+MINERU_API_BASE=https://mineru.net
+MINERU_TOKEN=
+MINERU_LANGUAGE=ch
+MINERU_MODEL_VERSION=vlm
 """
 
 
@@ -48,6 +51,7 @@ def init_vault(vault: Path) -> list[Path]:
         "notes",
         "progress",
         "inbox/待处理资料",
+        "inbox/converted",
     ]:
         path = vault / rel
         if not path.exists():
