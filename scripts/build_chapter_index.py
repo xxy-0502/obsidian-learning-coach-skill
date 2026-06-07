@@ -12,6 +12,21 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 INVALID_FILENAME_RE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 WORD_RE = re.compile(r"[A-Za-z0-9]+(?:[-_'][A-Za-z0-9]+)*")
+ARABIC_CHAPTER_RE = re.compile(r"^第\s*(\d+)\s*章\b")
+EN_CHAPTER_RE = re.compile(r"^Chapter\s+(\d+)\b", re.IGNORECASE)
+CN_CHAPTER_RE = re.compile(r"^第([一二三四五六七八九十]+)章\b")
+CN_NUMERAL_MAP = {
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+}
 
 
 def count_text_units(text: str) -> int:
@@ -66,6 +81,110 @@ def recommend_split_level(headings: list[dict[str, object]]) -> int | None:
     return None
 
 
+def parse_chapter_number(title: str) -> int | None:
+    for pattern in [ARABIC_CHAPTER_RE, EN_CHAPTER_RE]:
+        match = pattern.match(title)
+        if match:
+            return int(match.group(1))
+    match = CN_CHAPTER_RE.match(title)
+    if not match:
+        return None
+    raw = match.group(1)
+    if raw == "十":
+        return 10
+    if raw.startswith("十"):
+        return 10 + CN_NUMERAL_MAP.get(raw[1:], 0)
+    if raw.endswith("十"):
+        return CN_NUMERAL_MAP.get(raw[:-1], 1) * 10
+    if "十" in raw:
+        left, right = raw.split("十", 1)
+        return CN_NUMERAL_MAP.get(left, 1) * 10 + CN_NUMERAL_MAP.get(right, 0)
+    return CN_NUMERAL_MAP.get(raw)
+
+
+def best_chapter_sequence(
+    headings: list[dict[str, object]],
+    total_lines: int,
+    lines: list[str],
+) -> list[dict[str, object]]:
+    candidates = [
+        {**item, "chapter_number": parse_chapter_number(str(item["title"]))}
+        for item in headings
+        if parse_chapter_number(str(item["title"])) is not None
+    ]
+    best: list[dict[str, object]] = []
+    best_score = -1
+    for start_index, candidate in enumerate(candidates):
+        if candidate["chapter_number"] != 1:
+            continue
+        sequence = [candidate]
+        expected = 2
+        for item in candidates[start_index + 1 :]:
+            number = item["chapter_number"]
+            if number == expected:
+                sequence.append(item)
+                expected += 1
+            elif number == 1 and len(sequence) < 3:
+                break
+        if len(sequence) < 3:
+            continue
+        last_line = int(sequence[-1]["line"])
+        next_after_sequence = next(
+            (
+                int(item["line"])
+                for item in candidates
+                if int(item["line"]) > last_line and item["chapter_number"] == 1
+            ),
+            total_lines,
+        )
+        start_index = int(sequence[0]["line"]) - 1
+        end_index = min(next_after_sequence - 1, total_lines)
+        score = count_text_units("\n".join(lines[start_index:end_index]))
+        if score > best_score:
+            best = sequence
+            best_score = score
+    return best
+
+
+def display_chapter_title(boundary: dict[str, object], boundaries: list[dict[str, object]], headings: list[dict[str, object]]) -> str:
+    title = str(boundary["title"])
+    if parse_chapter_number(title) is None:
+        return title
+    bare_chapter = (
+        re.fullmatch(r"第\s*\d+\s*章", title) is not None
+        or re.fullmatch(r"Chapter\s+\d+", title, flags=re.IGNORECASE) is not None
+    )
+    if len(title) > 8 and not bare_chapter:
+        return title
+    start = int(boundary["index"])
+    next_boundary = next(
+        (int(item["index"]) for item in boundaries if int(item["index"]) > start),
+        10**12,
+    )
+    for item in headings:
+        index = int(item["index"])
+        candidate = str(item["title"])
+        if index <= start or index >= next_boundary:
+            continue
+        if index - start > 8:
+            break
+        if parse_chapter_number(candidate) is None and not re.match(r"^\d+\.\d+", candidate):
+            return f"{title} {candidate}"
+    return title
+
+
+def clean_generated_chapters(chapters_dir: Path) -> None:
+    if not chapters_dir.exists():
+        return
+    for path in chapters_dir.glob("C*.md"):
+        try:
+            first_line = path.read_text(encoding="utf-8").splitlines()[0]
+        except Exception:
+            continue
+        if first_line.startswith("<!-- chapter_id:"):
+            path.unlink()
+
+
 def collect_sections(
     lines: list[str],
     headings: list[dict[str, object]],
@@ -113,6 +232,52 @@ def collect_sections(
     return sections
 
 
+def collect_boundary_sections(
+    lines: list[str],
+    headings: list[dict[str, object]],
+    boundaries: list[dict[str, object]],
+    include_preface: bool,
+) -> list[dict[str, object]]:
+    if not boundaries:
+        return []
+
+    sections: list[dict[str, object]] = []
+    first_start = int(boundaries[0]["index"])
+    if include_preface and first_start > 0:
+        preface_text = "\n".join(lines[:first_start]).strip()
+        if count_text_units(preface_text) > 0:
+            sections.append(
+                {
+                    "title": "Preface",
+                    "level": 0,
+                    "start_index": 0,
+                    "end_index": first_start,
+                    "start_line": 1,
+                    "end_line": first_start,
+                    "content": preface_text + "\n",
+                }
+            )
+
+    for index, boundary in enumerate(boundaries):
+        start = int(boundary["index"])
+        end = int(boundaries[index + 1]["index"]) if index + 1 < len(boundaries) else len(lines)
+        content = "\n".join(lines[start:end]).strip()
+        if not content:
+            continue
+        sections.append(
+            {
+                "title": display_chapter_title(boundary, boundaries, headings),
+                "level": boundary["level"],
+                "start_index": start,
+                "end_index": end,
+                "start_line": start + 1,
+                "end_line": end,
+                "content": content + "\n",
+            }
+        )
+    return sections
+
+
 def write_chapters(src: Path, output_dir: Path, split_level: int, include_preface: bool) -> dict[str, object]:
     text = src.read_text(encoding="utf-8")
     lines = text.splitlines()
@@ -123,6 +288,7 @@ def write_chapters(src: Path, output_dir: Path, split_level: int, include_prefac
 
     chapters_dir = output_dir / "chapters"
     chapters_dir.mkdir(parents=True, exist_ok=True)
+    clean_generated_chapters(chapters_dir)
     chapters: list[dict[str, object]] = []
 
     for number, section in enumerate(sections, start=1):
@@ -151,12 +317,65 @@ def write_chapters(src: Path, output_dir: Path, split_level: int, include_prefac
 
     result = {
         "input": str(src),
+        "split_strategy": "heading_level",
         "split_level": split_level,
         "chapter_count": len(chapters),
         "chapters_dir": str(chapters_dir),
         "chapters": chapters,
     }
     return result
+
+
+def write_chapters_from_boundaries(
+    src: Path,
+    output_dir: Path,
+    boundaries: list[dict[str, object]],
+    include_preface: bool,
+) -> dict[str, object]:
+    text = src.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    headings = find_headings(lines)
+    sections = collect_boundary_sections(lines, headings, boundaries, include_preface)
+    if not sections:
+        raise SystemExit(f"No chapter boundaries found in {src}.")
+
+    chapters_dir = output_dir / "chapters"
+    chapters_dir.mkdir(parents=True, exist_ok=True)
+    clean_generated_chapters(chapters_dir)
+    chapters: list[dict[str, object]] = []
+
+    for number, section in enumerate(sections, start=1):
+        chapter_id = f"C{number:03d}"
+        title = str(section["title"])
+        filename = f"{chapter_id}_{safe_filename(title)}.md"
+        relative_file = Path("chapters") / filename
+        chapter_path = output_dir / relative_file
+        content = str(section["content"])
+        header = (
+            f"<!-- chapter_id: {chapter_id}; source: {src.name}; "
+            f"lines: {section['start_line']}-{section['end_line']} -->\n\n"
+        )
+        chapter_path.write_text(header + content, encoding="utf-8")
+        chapters.append(
+            {
+                "id": chapter_id,
+                "title": title,
+                "level": section["level"],
+                "file": str(relative_file).replace("\\", "/"),
+                "start_line": section["start_line"],
+                "end_line": section["end_line"],
+                "unit_count": count_text_units(content),
+            }
+        )
+
+    return {
+        "input": str(src),
+        "split_strategy": "chapter_sequence",
+        "split_level": "chapter",
+        "chapter_count": len(chapters),
+        "chapters_dir": str(chapters_dir),
+        "chapters": chapters,
+    }
 
 
 def write_index_markdown(result: dict[str, object], path: Path) -> None:
@@ -166,7 +385,8 @@ def write_index_markdown(result: dict[str, object], path: Path) -> None:
         "# Chapter Index",
         "",
         f"- Source: `{result['input']}`",
-        f"- Split level: `H{result['split_level']}`",
+        f"- Split strategy: `{result['split_strategy']}`",
+        f"- Split level: `{result['split_level']}`",
         f"- Chapter count: {result['chapter_count']}",
         "",
         "| ID | Title | Level | File | Lines | Readable size |",
@@ -199,22 +419,27 @@ def main() -> None:
     lines = src.read_text(encoding="utf-8").splitlines()
     headings = find_headings(lines)
     if args.level == "auto":
-        split_level = recommend_split_level(headings)
-        if split_level is None:
-            raise SystemExit("No stable heading level found. Run analyze_source_structure.py and keep this source unsplit.")
+        boundaries = best_chapter_sequence(headings, len(lines), lines)
+        if boundaries:
+            result = write_chapters_from_boundaries(src, output_dir, boundaries, args.include_preface)
+        else:
+            split_level = recommend_split_level(headings)
+            if split_level is None:
+                raise SystemExit("No stable heading level found. Run analyze_source_structure.py and keep this source unsplit.")
+            result = write_chapters(src, output_dir, split_level, args.include_preface)
     else:
         split_level = int(args.level)
         if split_level < 1 or split_level > 6:
             raise SystemExit("--level must be between 1 and 6.")
+        result = write_chapters(src, output_dir, split_level, args.include_preface)
 
-    result = write_chapters(src, output_dir, split_level, args.include_preface)
     json_path = output_dir / "chapter_index.json"
     md_path = output_dir / "chapter_index.md"
     json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     write_index_markdown(result, md_path)
     print(md_path)
     print(json_path)
-    print(f"chapter_count={result['chapter_count']} split_level=H{result['split_level']}")
+    print(f"chapter_count={result['chapter_count']} split_strategy={result['split_strategy']} split_level={result['split_level']}")
 
 
 if __name__ == "__main__":

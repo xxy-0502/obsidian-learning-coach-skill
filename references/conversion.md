@@ -76,7 +76,8 @@ Default behavior:
 
 - Sources below `20,000` readable units are not split.
 - Sources with too few Markdown headings are not force-split.
-- Sources with repeated heading levels are recommended for chapter splitting.
+- Sources with repeated chapter sequences such as `第1章` / `Chapter 1` are split by the best chapter sequence first.
+- Sources with repeated heading levels but no chapter sequence are split by heading level.
 - Very large sources still keep `full.md` as the canonical converted source.
 
 When the analysis recommends splitting, run:

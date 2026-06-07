@@ -11,6 +11,21 @@ from pathlib import Path
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 WORD_RE = re.compile(r"[A-Za-z0-9]+(?:[-_'][A-Za-z0-9]+)*")
+ARABIC_CHAPTER_RE = re.compile(r"^第\s*(\d+)\s*章\b")
+EN_CHAPTER_RE = re.compile(r"^Chapter\s+(\d+)\b", re.IGNORECASE)
+CN_NUMERAL_MAP = {
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+}
+CN_CHAPTER_RE = re.compile(r"^第([一二三四五六七八九十]+)章\b")
 
 
 def count_text_units(text: str) -> int:
@@ -59,6 +74,71 @@ def recommend_split_level(headings: list[dict[str, object]]) -> int | None:
     return None
 
 
+def parse_chapter_number(title: str) -> int | None:
+    for pattern in [ARABIC_CHAPTER_RE, EN_CHAPTER_RE]:
+        match = pattern.match(title)
+        if match:
+            return int(match.group(1))
+    match = CN_CHAPTER_RE.match(title)
+    if not match:
+        return None
+    raw = match.group(1)
+    if raw == "十":
+        return 10
+    if raw.startswith("十"):
+        return 10 + CN_NUMERAL_MAP.get(raw[1:], 0)
+    if raw.endswith("十"):
+        return CN_NUMERAL_MAP.get(raw[:-1], 1) * 10
+    if "十" in raw:
+        left, right = raw.split("十", 1)
+        return CN_NUMERAL_MAP.get(left, 1) * 10 + CN_NUMERAL_MAP.get(right, 0)
+    return CN_NUMERAL_MAP.get(raw)
+
+
+def best_chapter_sequence(
+    headings: list[dict[str, object]],
+    total_lines: int,
+    lines: list[str],
+) -> list[dict[str, object]]:
+    candidates = [
+        {**item, "chapter_number": parse_chapter_number(str(item["title"]))}
+        for item in headings
+        if parse_chapter_number(str(item["title"])) is not None
+    ]
+    best: list[dict[str, object]] = []
+    best_score = -1
+    for start_index, candidate in enumerate(candidates):
+        if candidate["chapter_number"] != 1:
+            continue
+        sequence = [candidate]
+        expected = 2
+        for item in candidates[start_index + 1 :]:
+            number = item["chapter_number"]
+            if number == expected:
+                sequence.append(item)
+                expected += 1
+            elif number == 1 and len(sequence) < 3:
+                break
+        if len(sequence) < 3:
+            continue
+        last_line = int(sequence[-1]["line"])
+        next_after_sequence = next(
+            (
+                int(item["line"])
+                for item in candidates
+                if int(item["line"]) > last_line and item["chapter_number"] == 1
+            ),
+            total_lines,
+        )
+        start_index = int(sequence[0]["line"]) - 1
+        end_index = min(next_after_sequence - 1, total_lines)
+        score = count_text_units("\n".join(lines[start_index:end_index]))
+        if score > best_score:
+            best = sequence
+            best_score = score
+    return best
+
+
 def analyze_source(
     path: Path,
     small_unit_limit: int,
@@ -66,19 +146,29 @@ def analyze_source(
     min_headings: int,
 ) -> dict[str, object]:
     text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
     headings = iter_markdown_headings(text)
     heading_counts = Counter(int(item["level"]) for item in headings)
     unit_count = count_text_units(text)
-    line_count = len(text.splitlines())
+    line_count = len(lines)
     split_level = recommend_split_level(headings)
+    chapter_sequence = best_chapter_sequence(headings, line_count, lines)
 
     reasons: list[str] = []
     should_split = False
     recommendation = "do_not_split"
+    split_strategy = "none"
 
     if unit_count < small_unit_limit:
         reasons.append(
             f"Readable size is below the small-source limit ({unit_count} < {small_unit_limit})."
+        )
+    elif chapter_sequence:
+        should_split = True
+        recommendation = "split_by_chapter_sequence"
+        split_strategy = "chapter_sequence"
+        reasons.append(
+            f"Use detected chapter sequence with {len(chapter_sequence)} chapter boundaries."
         )
     elif len(headings) < min_headings:
         reasons.append(
@@ -91,6 +181,7 @@ def analyze_source(
     else:
         should_split = True
         recommendation = "split_by_headings"
+        split_strategy = "heading_level"
         reasons.append(f"Use H{split_level} headings as chapter boundaries.")
         if unit_count >= large_unit_limit:
             reasons.append(
@@ -104,6 +195,9 @@ def analyze_source(
         "heading_count": len(headings),
         "heading_counts": {f"H{level}": heading_counts[level] for level in range(1, 7)},
         "recommended_split_level": split_level,
+        "recommended_split_strategy": split_strategy,
+        "chapter_boundary_count": len(chapter_sequence),
+        "chapter_boundaries": chapter_sequence,
         "recommendation": recommendation,
         "should_split": should_split,
         "reasons": reasons,
@@ -128,7 +222,9 @@ def write_markdown_report(analysis: dict[str, object], output: Path) -> None:
         f"- Headings: {analysis['heading_count']}",
         f"- Recommendation: `{analysis['recommendation']}`",
         f"- Should split: `{str(analysis['should_split']).lower()}`",
+        f"- Recommended strategy: `{analysis['recommended_split_strategy']}`",
         f"- Recommended split level: `{analysis['recommended_split_level'] or 'none'}`",
+        f"- Chapter boundaries: {analysis['chapter_boundary_count']}",
         "",
         "## Heading Counts",
         "",
