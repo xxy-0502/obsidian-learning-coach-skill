@@ -35,7 +35,7 @@ def init_topic(vault: Path, topic: str, mode: str, today: str) -> list[Path]:
             created.append(path)
 
     files = {
-        notes / "index.md": f"# {topic}\n\n- 模式：{mode}\n- 创建日期：{today}\n\n## 课程\n\n## 概念\n\n## 知识地图\n\n- [[知识地图]]\n",
+        notes / "index.md": f"# {topic}\n\n- 模式：{mode}\n- 创建日期：{today}\n\n## 入口\n\n- 知识结构：[[知识地图]]\n- 当前课程：\n\n## 说明\n\n概念关系维护在 [[知识地图]]。\n学习目标、掌握程度、复习安排和错题遗漏维护在 `progress/{name}/`。\n",
         notes / "maps" / "知识地图.md": f"# {topic} 知识地图\n\n## 核心概念\n\n## 关系\n\n",
         notes / "sources" / "来源索引.md": "# 来源索引\n\n| ID | 类型 | 标题/文件 | 原始位置 | 可读来源 | 说明 |\n| --- | --- | --- | --- | --- | --- |\n",
         progress / "进度.md": f"# {topic} 学习进度\n\n## 基本信息\n\n- 开始日期：{today}\n- 学习目标：\n- 目标程度：了解概念 / 能独立运用 / 深度精通\n- 先验知识：\n- 最后学习日期：{today}\n- 最后复习日期：—\n\n## 课程进度\n\n| 课程 | 完成日期 | 掌握程度 | 下次复习 | 关键误区 |\n| --- | --- | --- | --- | --- |\n| 01_核心概念 | — | — | — | — |\n\n## 当前状态\n\n- 正在学习：\n- 最近卡点：\n- 下一步建议：\n",

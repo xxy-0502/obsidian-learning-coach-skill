@@ -64,8 +64,11 @@ After the user answers, separate the information:
 - Teach one lesson or checkpoint at a time; never generate the entire course at once by default.
 - Use Feynman-style plain explanation, Socratic questions, scaffolding, examples, and short active-recall checks.
 - Do not move forward when the learner has not mastered the prerequisite.
-- Write durable Obsidian notes separately from session coaching: lessons go in `notes/[主题]/lessons/`; reusable concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/知识地图.md`; progress state goes in `progress/[主题]/`.
-- Use `[[双链]]` for related concepts and tags like `learning/[主题]`.
+- Write durable Obsidian notes separately from session coaching: topic entry pages go in `notes/[主题]/index.md`; lessons go in `notes/[主题]/lessons/`; reusable concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/知识地图.md`; progress state goes in `progress/[主题]/`.
+- Keep `notes/[主题]/index.md` as a light course entry page only. It should link to a few entry points such as the knowledge map and current lesson; do not use it as a concept list, knowledge map, or progress page.
+- Put concept relationships, learning paths, prerequisites, comparisons, and review structure in `notes/[主题]/maps/知识地图.md`; put goals, mastery state, review dates, mistakes, and next steps in `progress/[主题]/`.
+- Use `[[双链]]` only for stable, reusable, review-worthy concepts and important entry pages. Avoid linking ordinary words, broad generic labels, one-off mentions, or temporary headings. Prefer relationship sentences such as `[[A]] 是 [[B]] 的前置概念` over bare related-link lists.
+- Use tags like `learning/[主题]`.
 - Prefer glossary translations from `settings/glossary.md`; do not overwrite existing glossary entries automatically.
 - Use absolute dates for review plans and logs.
 - After every lesson or review, maintain only the Plus three-file progress set: `进度.md`, `错题与遗漏.md`, and `复习计划.md`.

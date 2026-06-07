@@ -31,6 +31,27 @@ LearningVault/
          └─ images/
 ```
 
+## Topic Index Template
+
+`notes/[主题]/index.md` is a light course entry page, not a knowledge map or progress page. Keep only a few navigation links. Put concept relationships in `maps/知识地图.md`; put goals, mastery, review dates, mistakes, and next steps in `progress/[主题]/`.
+
+```markdown
+# [主题]
+
+- 模式：[topic-first/source-first]
+- 创建日期：YYYY-MM-DD
+
+## 入口
+
+- 知识结构：[[知识地图]]
+- 当前课程：
+
+## 说明
+
+概念关系维护在 [[知识地图]]。
+学习目标、掌握程度、复习安排和错题遗漏维护在 `progress/[主题]/`。
+```
+
 ## Source Index Template
 
 ```markdown
@@ -67,10 +88,10 @@ tags:
 
 ## 例子
 
-## 相关概念
+## 关系说明
 
-- [[相关概念A]]
-- [[相关概念B]]
+- [[相关概念A]] 是理解本概念的前置知识。
+- 本概念容易和 [[相关概念B]] 混淆，区别在于……
 
 ## 来源
 ```
@@ -108,4 +129,4 @@ tags:
 
 ## Map Template
 
-Use `[[概念名]]` links and short relationship notes. Keep maps maintainable rather than exhaustive.
+Use `[[概念名]]` links and short relationship notes. Keep maps maintainable rather than exhaustive. Prefer learning paths, prerequisites, comparisons, and review-worthy relationships over complete concept inventories.
