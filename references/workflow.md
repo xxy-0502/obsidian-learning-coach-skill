@@ -25,14 +25,17 @@ Use when the user provides PDF, image, Office file, webpage, GitHub repo, pasted
 3. Convert complex files with `scripts/convert_to_markdown.py` when needed.
 4. Use the converted source at `LearningVault/inbox/converted/[source-name]/full.md` as the primary source. Related media stay in the same converted source directory, such as `images/`.
 5. If the user provides readable `.md`, `.txt`, pasted text, webpage text, or an existing note, read that directly instead of reconverting.
-6. Ask the start assessment unless the user already answered it or asked to begin directly.
-7. If assessment answers are missing, stop after asking the four questions; do not create the first lesson yet.
-8. Initialize the topic with `scripts/init_topic.py --mode source-first`.
-9. Record assessment answers that are specific to this topic in `progress/[主题]/进度.md`.
-10. If the answers include stable learner preferences, ask whether to update `settings/background.md` unless the user explicitly asked to update it.
-11. Build `notes/[主题]/sources/来源索引.md`, recording the raw source path and the converted Markdown path when both exist.
-12. Create the first lesson and concept notes grounded in the supplied material.
-13. Mark material outside the supplied source as `资料外补充`.
+6. For long or complex Markdown sources, run `scripts/analyze_source_structure.py --input [full.md]`.
+7. If the analysis recommends splitting, run `scripts/build_chapter_index.py --input [full.md]`. This creates `chapter_index.md`, `chapter_index.json`, and `chapters/`.
+8. Ask the start assessment unless the user already answered it or asked to begin directly.
+9. If assessment answers are missing, stop after asking the four questions; do not create the first lesson yet.
+10. Initialize the topic with `scripts/init_topic.py --mode source-first`.
+11. Record assessment answers that are specific to this topic in `progress/[主题]/进度.md`.
+12. If the answers include stable learner preferences, ask whether to update `settings/background.md` unless the user explicitly asked to update it.
+13. Build `notes/[主题]/sources/来源索引.md`, recording the raw source path, converted Markdown path, and chapter-index path when they exist.
+14. If `chapter_index.md` exists, read it before reading chapter content. Select only the relevant `chapters/Cxxx_*.md` files for the current lesson, and use `full.md` only as fallback or provenance.
+15. Create the first lesson and concept notes grounded in the supplied material.
+16. Mark material outside the supplied source as `资料外补充`.
 
 ## Conversion Route
 

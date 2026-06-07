@@ -31,7 +31,7 @@ Use Route A when the user gives only a topic. Start from general knowledge, do n
 
 Use Route B when the user provides a PDF, webpage, GitHub repo, document, image, pasted text, or existing note. Convert complex files to Markdown when needed, build `sources/来源索引.md`, and ground lessons and notes in the provided material. Mark any supplement not covered by the material as "资料外补充".
 
-For source-first learning, keep raw files and converted files separate. Raw user material belongs in `LearningVault/inbox/待处理资料/`. Converted material belongs in `LearningVault/inbox/converted/[source-name]/full.md` with related media in the same converted source directory. After conversion, read `full.md` as the primary learning source and record both the raw-file path and converted Markdown path in the source index. If a user provides an already-readable `.md` or `.txt`, read that file directly and record its path.
+For source-first learning, keep raw files and converted files separate. Raw user material belongs in `LearningVault/inbox/待处理资料/`. Converted material belongs in `LearningVault/inbox/converted/[source-name]/full.md` with related media in the same converted source directory. After conversion, run `scripts/analyze_source_structure.py` on long or complex Markdown sources. If the analysis recommends splitting, run `scripts/build_chapter_index.py` to create `chapter_index.md`, `chapter_index.json`, and `chapters/`. For large sources, read `chapter_index.md` first and then only the relevant `chapters/Cxxx_*.md` files for the current lesson; use `full.md` as the fallback or provenance source. Record raw, converted, and chapter-index paths in the source index when available. If a user provides an already-readable `.md` or `.txt`, read that file directly and record its path.
 
 Use Review Route when the user asks about due reviews, reviewing a topic, missed points, or time since last study. Prefer active recall before re-reading.
 
@@ -62,6 +62,7 @@ After the user answers, separate the information:
 ## Teaching Rules
 
 - Teach one lesson or checkpoint at a time; never generate the entire course at once by default.
+- For large source-first materials with `chapter_index.md`, choose the current chapter from the index before teaching. Do not read or summarize the whole `full.md` unless the user explicitly asks for a whole-source overview or the source is small enough to avoid splitting.
 - Use Feynman-style plain explanation, Socratic questions, scaffolding, examples, and short active-recall checks.
 - Do not move forward when the learner has not mastered the prerequisite.
 - Write durable Obsidian notes separately from session coaching: topic entry pages go in `notes/[主题]/index.md`; lessons go in `notes/[主题]/lessons/`; reusable concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/知识地图.md`; progress state goes in `progress/[主题]/`.

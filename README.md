@@ -346,7 +346,52 @@ python scripts/convert_to_markdown.py `
 LearningVault/inbox/converted/[资料名]/full.md
 ```
 
-AI 后续学习时只需要读取这个合并后的 `full.md`，不需要逐个读取 part 文件。
+AI 后续学习时会先判断资料规模和结构。短资料可以直接读取 `full.md`；长资料会优先建立章节索引，再按当前课程读取相关章节文件。
+
+## 结构分析与章节索引
+
+不是所有资料都需要拆分。转换完成后，长资料或结构复杂的资料可以先运行结构分析：
+
+```powershell
+python scripts/analyze_source_structure.py `
+  --input "LearningVault/inbox/converted/example/full.md"
+```
+
+脚本会生成：
+
+```text
+LearningVault/inbox/converted/example/source_structure.md
+LearningVault/inbox/converted/example/source_structure.json
+```
+
+默认策略比较保守：
+
+- 少于 `20,000` 个可读单位的资料不拆。
+- 标题太少或层级不清晰时，只生成结构报告，不强行拆分。
+- 标题层级清楚的长资料才建议按章拆分。
+- `full.md` 始终保留为完整可读来源。
+
+如果分析结果建议拆分，再运行：
+
+```powershell
+python scripts/build_chapter_index.py `
+  --input "LearningVault/inbox/converted/example/full.md"
+```
+
+输出结构：
+
+```text
+LearningVault/inbox/converted/example/
+├─ full.md
+├─ source_structure.md
+├─ chapter_index.md
+├─ chapter_index.json
+└─ chapters/
+   ├─ C001_绪论.md
+   └─ C002_第一章_xxx.md
+```
+
+后续学习时，如果存在 `chapter_index.md`，AI 应该先读取章节索引，再只读取当前 lesson 需要的 `chapters/Cxxx_*.md`，必要时才回查 `full.md`。
 
 ## 支持的原始文件类型
 
@@ -480,6 +525,8 @@ LearningVault/
 - `scripts/init_vault.py`：初始化 Obsidian 学习库。
 - `scripts/init_topic.py`：初始化某个学习主题。
 - `scripts/convert_to_markdown.py`：把资料转换为 Markdown。
+- `scripts/analyze_source_structure.py`：分析转换后的 Markdown 是否适合建立章节索引。
+- `scripts/build_chapter_index.py`：按稳定标题层级生成章节索引和 `chapters/` 文件。
 - `scripts/scan_due_reviews.py`：扫描到期复习内容。
 - `scripts/update_review_plan.py`：更新复习计划和复习记录。
 - `scripts/extract_glossary.py`：从笔记或资料中辅助提取术语。

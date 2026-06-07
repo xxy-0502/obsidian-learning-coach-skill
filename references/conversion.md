@@ -56,4 +56,44 @@ Behavior:
 
 After conversion, source-first learning should read the converted `full.md` and record both raw and converted paths in `notes/[主题]/sources/来源索引.md`.
 
+## Structure Analysis And Chapter Splitting
+
+Do not split every source. After conversion, use structure analysis for long or complex sources:
+
+```powershell
+python scripts/analyze_source_structure.py `
+  --input "LearningVault/inbox/converted/my-paper/full.md"
+```
+
+This writes:
+
+```text
+LearningVault/inbox/converted/my-paper/source_structure.md
+LearningVault/inbox/converted/my-paper/source_structure.json
+```
+
+Default behavior:
+
+- Sources below `20,000` readable units are not split.
+- Sources with too few Markdown headings are not force-split.
+- Sources with repeated heading levels are recommended for chapter splitting.
+- Very large sources still keep `full.md` as the canonical converted source.
+
+When the analysis recommends splitting, run:
+
+```powershell
+python scripts/build_chapter_index.py `
+  --input "LearningVault/inbox/converted/my-paper/full.md"
+```
+
+This writes:
+
+```text
+LearningVault/inbox/converted/my-paper/chapter_index.md
+LearningVault/inbox/converted/my-paper/chapter_index.json
+LearningVault/inbox/converted/my-paper/chapters/
+```
+
+For source-first learning, if `chapter_index.md` exists, read that index before reading chapter content. Then read only the relevant `chapters/Cxxx_*.md` files for the current lesson. Use `full.md` as fallback or provenance.
+
 MinerU is optional for v1. If the API changes or a local converter is preferred, patch `scripts/convert_to_markdown.py` rather than changing learning workflows.
