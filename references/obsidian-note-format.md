@@ -67,10 +67,13 @@ LearningVault/
 
 ## Concept Note Template
 
+Use `level: foundation` for beginner prerequisites, notation, tools, or background concepts that must be understood before the main lesson. Use `level: core` or `level: advanced` for later concepts. Foundation-level concept notes should be smaller and plainer than advanced concept notes.
+
 ```markdown
 ---
 type: concept
 topic: [主题]
+level: foundation/core/advanced
 status: learning
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -83,6 +86,8 @@ tags:
 
 ## 一句话解释
 
+## 它解决什么问题
+
 ## 为什么重要
 
 ## 核心理解
@@ -90,6 +95,8 @@ tags:
 ## 常见误区
 
 ## 例子
+
+## 主动回忆
 
 ## 关系说明
 
@@ -116,6 +123,8 @@ tags:
 # [课程名]
 
 ## 今日目标
+
+## 基础概念补齐
 
 ## 前置知识
 

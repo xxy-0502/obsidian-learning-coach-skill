@@ -51,7 +51,7 @@ Offer these options when helpful:
 - 目标程度：了解概念 / 能独立运用 / 能复述讲解 / 能实践实现 / 深度精通
 - 学习方式：概念理解 / 实践项目 / 考试复习 / 论文阅读 / 工作应用 / 汇报展示
 
-If the user says "不要问，直接开始", assume: 初学者；目标为能独立理解并复述；概念理解优先，辅以应用例子；循序渐进，不一次性生成全部课程。
+If the user says "不要问，直接开始", assume: 初学者；基础状态为 `foundation-first`；目标为能独立理解并复述；概念理解优先，辅以应用例子；循序渐进，不一次性生成全部课程。
 
 After the user answers, separate the information:
 
@@ -63,9 +63,13 @@ After the user answers, separate the information:
 
 - Teach one lesson or checkpoint at a time; never generate the entire course at once by default.
 - For large source-first materials with `chapter_index.md`, choose the current chapter from the index before teaching. Do not read or summarize the whole `full.md` unless the user explicitly asks for a whole-source overview or the source is small enough to avoid splitting.
+- Never assume the learner already knows the foundational concepts. If the start assessment or progress file says "完全不懂", "零基础", "没学过", "不知道", "不理解", "只听过名字", "基础很差", or equivalent, treat the topic as foundation-first.
+- Before the first substantive lesson for a new topic, create or update a foundation map in `notes/[主题]/maps/知识地图.md`: key prerequisites, plain-language definitions, required symbols/terms, and "must know before continuing" checkpoints.
+- If a prerequisite is not confirmed by the learner or is needed to understand the current lesson, write it as a foundation-level concept note under `notes/[主题]/concepts/` before writing advanced concept notes. Use `type: concept` and `level: foundation` in frontmatter. Foundation-level concept notes should answer: what it is, why it matters, what problem it solves, one tiny example, and one active-recall question.
+- Each lesson must include a "基础概念补齐" section when the learner is foundation-first or when the lesson depends on terms, notation, math, tools, or background ideas that a beginner may not know. If no foundation is needed, state that the lesson has no new prerequisite beyond the current topic progress.
 - Use Feynman-style plain explanation, Socratic questions, scaffolding, examples, and short active-recall checks.
 - Do not move forward when the learner has not mastered the prerequisite.
-- Write durable Obsidian notes separately from session coaching: topic entry pages go in `notes/[主题]/index.md`; lessons go in `notes/[主题]/lessons/`; reusable concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/知识地图.md`; progress state goes in `progress/[主题]/`.
+- Write durable Obsidian notes separately from session coaching: topic entry pages go in `notes/[主题]/index.md`; lessons go in `notes/[主题]/lessons/`; reusable and foundation-level concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/知识地图.md`; progress state goes in `progress/[主题]/`.
 - Keep `notes/[主题]/index.md` as a light course entry page only. It should link to a few entry points such as the knowledge map and current lesson; do not use it as a concept list, knowledge map, or progress page.
 - Put concept relationships, learning paths, prerequisites, comparisons, and review structure in `notes/[主题]/maps/知识地图.md`; put goals, mastery state, review dates, mistakes, and next steps in `progress/[主题]/`.
 - Use `[[双链]]` only for stable, reusable, review-worthy concepts and important entry pages. Avoid linking ordinary words, broad generic labels, one-off mentions, or temporary headings. Prefer relationship sentences such as `[[A]] 是 [[B]] 的前置概念` over bare related-link lists.
