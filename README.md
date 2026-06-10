@@ -1,6 +1,6 @@
 # Obsidian Learning Coach Skill
 
-Obsidian Learning Coach 是一个面向 Codex 的学习教练 Skill。它可以把“我想学一个主题”“我想读懂一份资料”“今天该复习什么”这类需求，整理成 Obsidian 友好的 Markdown 笔记、学习进度、错题遗漏和间隔复习计划。
+Obsidian Learning Coach 是一个面向 Agent Skills 运行环境的学习教练 Skill。它可以把“我想学一个主题”“我想读懂一份资料”“今天该复习什么”这类需求，整理成 Obsidian 友好的 Markdown 笔记、学习进度、错题遗漏和间隔复习计划。
 
 它默认用中文教学，必要时提供中英双语术语，适合希望长期维护个人知识库、复盘学习过程、并把 AI 辅助学习沉淀到 Obsidian 的用户。
 
@@ -84,9 +84,9 @@ obsidian-learning-coach/
 
 ## 安装教程
 
-### 方式一：作为 Codex Skill 使用
+### 方式一：作为 Agent Skill 使用
 
-把本仓库放到你的 Codex skills 目录下，例如：
+把本仓库放到你的运行环境的 skills 目录下。例如，在 Codex 中可以放到：
 
 ```text
 C:\Users\<你的用户名>\.codex\skills\obsidian-learning-coach
@@ -102,7 +102,7 @@ scripts/
 agents/
 ```
 
-然后在 Codex 中使用：
+然后在支持 skill 触发的对话中使用：
 
 ```text
 使用 $obsidian-learning-coach，我想学机器学习
@@ -114,7 +114,7 @@ agents/
 我想学机器学习
 ```
 
-如果 Codex 已识别该 skill，它会自动进入 Obsidian 学习教练流程。
+如果运行环境已识别该 skill，它会自动进入 Obsidian 学习教练流程。
 
 ### 方式二：从 GitHub 克隆
 
@@ -123,11 +123,11 @@ git clone https://github.com/xxy-0502/obsidian-learning-coach-skill.git
 cd obsidian-learning-coach-skill
 ```
 
-如果你要让 Codex 直接识别它，请把克隆后的目录放入 Codex skills 目录，或根据你的 Codex 配置将该目录加入可用 skills。
+如果你要让某个运行环境直接识别它，请把克隆后的目录放入该运行环境的 skills 目录，或按对应配置将该目录加入可用 skills。
 
 ## 初始化 Obsidian 学习库
 
-通常不需要手动初始化。你可以直接在 Codex 里说：
+通常不需要手动初始化。你可以直接在支持该 skill 的对话里说：
 
 ```text
 使用 $obsidian-learning-coach，我想学机器学习

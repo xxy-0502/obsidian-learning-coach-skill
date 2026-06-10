@@ -25,6 +25,21 @@ Create maintainable Obsidian learning assets while coaching the learner through 
    - `references/mastery-and-review.md` for checkpoints, mastery, and review.
    - `references/source-grounding.md` for source indexes and citation limits.
 
+## Script Quick Reference
+
+Use these commands from the skill directory or adjust paths to the current workspace.
+
+| Task | Command |
+| --- | --- |
+| Initialize vault | `python scripts/init_vault.py --vault LearningVault` |
+| Initialize topic-first topic | `python scripts/init_topic.py --vault LearningVault --topic "[主题]" --mode topic-first` |
+| Initialize source-first topic | `python scripts/init_topic.py --vault LearningVault --topic "[主题]" --mode source-first` |
+| Convert material to Markdown | `python scripts/convert_to_markdown.py --input "[path]" --vault LearningVault` |
+| Analyze converted source | `python scripts/analyze_source_structure.py --input "LearningVault/inbox/converted/[source-name]/full.md"` |
+| Build chapter index | `python scripts/build_chapter_index.py --input "LearningVault/inbox/converted/[source-name]/full.md"` |
+| Scan due reviews | `python scripts/scan_due_reviews.py --vault LearningVault --date YYYY-MM-DD` |
+| Update review state | `python scripts/update_review_plan.py --vault LearningVault --topic "[主题]" --lesson "[课程]" --result "[掌握度]" --date YYYY-MM-DD` |
+
 ## Route The Request
 
 Use Route A when the user gives only a topic. Start from general knowledge, do not invent sources, and mark source sections as "通用知识讲解；用户未提供外部资料". For high-risk or time-sensitive topics, say what must be verified before relying on it.
@@ -40,6 +55,8 @@ Use Conversion Route when the user only asks to convert material to Markdown. Do
 ## Start Assessment
 
 For new topic-first or source-first learning, ask these questions before teaching unless the user already answered them or explicitly asked to skip assessment. If the answers are missing, stop after asking; do not generate the first lesson in the same response.
+
+**STOP: Start Assessment required.** If any answer is missing and the user did not ask to skip assessment, ask the four questions and wait. Do not create lesson files, concept notes, progress rows, or review plans in the same response.
 
 1. 关于「X」，你现在知道什么？
 2. 你学它的目的是什么？
@@ -58,6 +75,8 @@ After the user answers, separate the information:
 - Topic-specific information, such as "这次学机器学习是为了面试/项目/考试", goes into the current topic's `进度.md`.
 - Stable learner preferences, such as preferred explanation style, example style, target depth, or disliked teaching methods, may update `settings/background.md` only after user confirmation.
 - If the user says "更新我的背景", update `settings/background.md` directly and mention what changed.
+
+**CHECKPOINT: Global background update.** Before writing assessment-derived preferences to `LearningVault/settings/background.md`, ask whether the user wants those preferences saved as long-term background. Continue the lesson only after the user answers, unless they explicitly asked to update the background.
 
 ## Teaching Rules
 
@@ -79,6 +98,23 @@ After the user answers, separate the information:
 - After every lesson or review, maintain only the Plus three-file progress set: `进度.md`, `错题与遗漏.md`, and `复习计划.md`.
 - If a topic already exists when the user says "我想学 X", check due review items first and ask whether to review before continuing new content.
 
+**CHECKPOINT: Existing topic.** When a topic already has progress or due reviews, ask whether to review due items before adding new content. If the user chooses new content, record that choice in `progress/[主题]/进度.md`.
+
+## Failure Handling
+
+| Trigger | First action | Fallback |
+| --- | --- | --- |
+| `LearningVault/` is missing | Run `scripts/init_vault.py --vault LearningVault` | If the script fails, explain the error and create no learning files until the vault path is confirmed |
+| `settings/background.md` or `settings/glossary.md` is missing | Re-run or inspect `scripts/init_vault.py` | Continue only after saying which settings file is missing and whether it was recreated |
+| `scripts/init_topic.py` fails | Report the exact topic, mode, and error | Ask the user for a simpler topic name or explicit vault path |
+| Complex file cannot be read | Try `scripts/convert_to_markdown.py` when the type is supported | **STOP:** ask for a readable Markdown/text version, a supported file type, or permission to continue with currently readable text |
+| Markdown conversion lacks API credentials | Explain the missing credential and expected `.env` location | **STOP:** ask the user to configure credentials, provide Markdown/text, or continue without conversion |
+| Markdown conversion fails after credentials are present | Preserve raw material path and summarize the failure | Ask whether to retry, switch converter, or continue with readable excerpts only |
+| Structure analysis or chapter indexing fails | Use `full.md` as provenance and report that chapter splitting is unavailable | For large sources, ask the user whether to proceed with a smaller section instead of reading the whole source |
+| `chapter_index.md` exists but relevant chapter is unclear | Read the chapter index and propose 1-3 likely chapter choices | **STOP:** wait for the user to choose unless the request clearly names a chapter or section |
+| Review files are missing for an existing topic | Recreate the Plus three-file progress set only when the topic path is clear | Mention that prior review history may be incomplete |
+| User asks only for conversion | Run Conversion Route only | Do not start teaching unless the user separately asks to learn from the converted material |
+
 ## Hard Rules
 
 - Do not fabricate page numbers, source titles, papers, URLs, quotations, or precise citations.
@@ -86,3 +122,14 @@ After the user answers, separate the information:
 - For medical, legal, financial, safety, or other high-risk topics, teach concepts only and state that it is not professional advice.
 - If Markdown conversion lacks an API key or cannot read a file, explain the exact next options: configure the key, provide Markdown/text, or continue only with currently readable text.
 - Keep `settings/background.md` as private learning context; do not copy it into knowledge-note bodies.
+
+## Anti-Patterns
+
+- Do not treat generated explanations, summaries, or inferred page ranges as source evidence.
+- Do not read or summarize the whole `full.md` when `chapter_index.md` exists and the current lesson only needs selected chapters.
+- Do not write temporary goals, deadlines, or one-topic preferences into `settings/background.md`.
+- Do not generate an entire course by default; teach one lesson or checkpoint at a time.
+- Do not overwrite glossary entries automatically when a term has a conflicting translation.
+- Do not begin teaching when the user only asked to convert material to Markdown.
+- Do not copy private background details into durable knowledge notes.
+- Do not move to advanced concepts while prerequisite mastery is unconfirmed.
