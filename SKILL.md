@@ -34,6 +34,7 @@ Use these commands from the skill directory or adjust paths to the current works
 | Initialize vault | `python scripts/init_vault.py --vault LearningVault` |
 | Initialize topic-first topic | `python scripts/init_topic.py --vault LearningVault --topic "[主题]" --mode topic-first` |
 | Initialize source-first topic | `python scripts/init_topic.py --vault LearningVault --topic "[主题]" --mode source-first` |
+| Prepare long or complex source | `python scripts/prepare_source.py --input "[path]" --vault LearningVault` |
 | Convert material to Markdown | `python scripts/convert_to_markdown.py --input "[path]" --vault LearningVault` |
 | Analyze converted source | `python scripts/analyze_source_structure.py --input "LearningVault/inbox/converted/[source-name]/full.md"` |
 | Build chapter index | `python scripts/build_chapter_index.py --input "LearningVault/inbox/converted/[source-name]/full.md"` |
@@ -44,9 +45,11 @@ Use these commands from the skill directory or adjust paths to the current works
 
 Use Route A when the user gives only a topic. Start from general knowledge, do not invent sources, and mark source sections as "通用知识讲解；用户未提供外部资料". For high-risk or time-sensitive topics, say what must be verified before relying on it.
 
-Use Route B when the user provides a PDF, webpage, GitHub repo, document, image, pasted text, or existing note. Convert complex files to Markdown when needed, build `sources/来源索引.md`, and ground lessons and notes in the provided material. Mark any supplement not covered by the material as "资料外补充".
+Use Route B when the user provides a PDF, webpage, GitHub repo, document, image, pasted text, or existing note. For books, textbooks, manuals, reports, long PDFs, or any complex source likely to exceed one lesson, run `scripts/prepare_source.py --input "[path]" --vault LearningVault` before teaching. Convert smaller complex files to Markdown when needed, build `sources/来源索引.md`, and ground lessons and notes in the provided material. Mark any supplement not covered by the material as "资料外补充".
 
-For source-first learning, keep raw files and converted files separate. Raw user material belongs in `LearningVault/inbox/待处理资料/`. Converted material belongs in `LearningVault/inbox/converted/[source-name]/full.md` with related media in the same converted source directory. After conversion, run `scripts/analyze_source_structure.py` on long or complex Markdown sources. If the analysis recommends splitting, run `scripts/build_chapter_index.py` to create `chapter_index.md`, `chapter_index.json`, and `chapters/`. For large sources, read `chapter_index.md` first and then only the relevant `chapters/Cxxx_*.md` files for the current lesson; use `full.md` as the fallback or provenance source. Record raw, converted, and chapter-index paths in the source index when available. If a user provides an already-readable `.md` or `.txt`, read that file directly and record its path.
+For source-first learning, keep raw files and converted files separate. Raw user material belongs in `LearningVault/inbox/待处理资料/`. Converted material belongs in `LearningVault/inbox/converted/[source-name]/full.md` with related media in the same converted source directory. After conversion, long or complex sources must have `source_structure.md/json`; if the source is book-like or `source_structure.json` says `should_split=true`, create `chapter_index.md`, `chapter_index.json`, and `chapters/` before the first lesson. For large sources, read `chapter_index.md` first and then only the relevant `chapters/Cxxx_*.md` files for the current lesson; use `full.md` as the fallback or provenance source. Record raw, converted, and chapter-index paths in the source index when available. If a user provides an already-readable `.md` or `.txt`, read that file directly and record its path.
+
+**STOP: Long source preparation required.** If the user provides a textbook, book, manual, report, or a PDF that appears to have many pages, do not start teaching from `full.md` immediately. Run `scripts/prepare_source.py`. If no `chapter_index.md` is produced for a long source, explain the reason from `source_structure.md` and ask whether to force chapter splitting, work from a smaller section, or continue unsplit.
 
 Use Review Route when the user asks about due reviews, reviewing a topic, missed points, or time since last study. Prefer active recall before re-reading.
 
@@ -87,6 +90,7 @@ After the user answers, separate the information:
 - If a prerequisite is not confirmed by the learner or is needed to understand the current lesson, write it as a foundation-level concept note under `notes/[主题]/concepts/` before writing advanced concept notes. Use `type: concept` and `level: foundation` in frontmatter. Foundation-level concept notes should answer: what it is, why it matters, what problem it solves, one tiny example, and one active-recall question.
 - Each lesson must include a "基础概念补齐" section when the learner is foundation-first or when the lesson depends on terms, notation, math, tools, or background ideas that a beginner may not know. If no foundation is needed, state that the lesson has no new prerequisite beyond the current topic progress.
 - Use Feynman-style plain explanation, Socratic questions, scaffolding, examples, and short active-recall checks.
+- For STEM topics such as engineering, mathematics, physics, chemistry, computer science, statistics, control, circuits, mechanics, thermodynamics, signals, algorithms, or other technical subjects, keep the conversational explanation plain but write durable notes in a structured technical format. Include definitions, assumptions, variables, units, formulas, derivation or reasoning steps, worked examples, boundary conditions, common mistakes, and active-recall checks when relevant.
 - Do not move forward when the learner has not mastered the prerequisite.
 - Write durable Obsidian notes separately from session coaching: topic entry pages go in `notes/[主题]/index.md`; lessons go in `notes/[主题]/lessons/`; reusable and foundation-level concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/知识地图.md`; progress state goes in `progress/[主题]/`.
 - Keep `notes/[主题]/index.md` as a light course entry page only. It should link to a few entry points such as the knowledge map and current lesson; do not use it as a concept list, knowledge map, or progress page.
@@ -110,6 +114,7 @@ After the user answers, separate the information:
 | Complex file cannot be read | Try `scripts/convert_to_markdown.py` when the type is supported | **STOP:** ask for a readable Markdown/text version, a supported file type, or permission to continue with currently readable text |
 | Markdown conversion lacks API credentials | Explain the missing credential and expected `.env` location | **STOP:** ask the user to configure credentials, provide Markdown/text, or continue without conversion |
 | Markdown conversion fails after credentials are present | Preserve raw material path and summarize the failure | Ask whether to retry, switch converter, or continue with readable excerpts only |
+| Long or book-like source has no chapter index | Read `source_structure.md` and report why splitting did not happen | **STOP:** ask whether to force a split level, use a smaller section, or continue unsplit |
 | Structure analysis or chapter indexing fails | Use `full.md` as provenance and report that chapter splitting is unavailable | For large sources, ask the user whether to proceed with a smaller section instead of reading the whole source |
 | `chapter_index.md` exists but relevant chapter is unclear | Read the chapter index and propose 1-3 likely chapter choices | **STOP:** wait for the user to choose unless the request clearly names a chapter or section |
 | Review files are missing for an existing topic | Recreate the Plus three-file progress set only when the topic path is clear | Mention that prior review history may be incomplete |
@@ -133,3 +138,4 @@ After the user answers, separate the information:
 - Do not begin teaching when the user only asked to convert material to Markdown.
 - Do not copy private background details into durable knowledge notes.
 - Do not move to advanced concepts while prerequisite mastery is unconfirmed.
+- Do not write STEM notes as loose prose only; avoid chatty paragraphs without definitions, formulas, conditions, worked examples, or reviewable structure.

@@ -38,9 +38,11 @@ Large PDFs:
 
 - MinerU precise API can reject PDFs above its page limit.
 - The converter auto-splits oversized PDFs by default with `--split-pages 180`.
-- Part PDFs and part Markdown are saved under `LearningVault/inbox/converted/[source-name]/parts/`.
+- Temporary part PDFs and part Markdown are saved under `LearningVault/inbox/converted/[source-name]/parts/` while conversion is running.
 - The merged readable source remains `LearningVault/inbox/converted/[source-name]/full.md`.
 - Part image links are rewritten into `images/part_001/`, `images/part_002/`, etc. to avoid filename collisions.
+- After successful merge, `parts/` is cleaned by default.
+- Use `--keep-parts` only for debugging failed conversion or auditing per-part Markdown.
 - Use `--no-auto-split` to disable splitting.
 
 Behavior:
@@ -57,6 +59,27 @@ Behavior:
 After conversion, source-first learning should read the converted `full.md` and record both raw and converted paths in `notes/[主题]/sources/来源索引.md`.
 
 ## Structure Analysis And Chapter Splitting
+
+For books, textbooks, manuals, long reports, long PDFs, or any source likely to exceed one lesson, prefer the one-command preparation route:
+
+```powershell
+python scripts/prepare_source.py `
+  --input "LearningVault/inbox/待处理资料/my-book.pdf" `
+  --vault "LearningVault"
+```
+
+This writes or reports:
+
+```text
+LearningVault/inbox/converted/my-book/full.md
+LearningVault/inbox/converted/my-book/source_structure.md
+LearningVault/inbox/converted/my-book/source_structure.json
+LearningVault/inbox/converted/my-book/chapter_index.md
+LearningVault/inbox/converted/my-book/chapter_index.json
+LearningVault/inbox/converted/my-book/chapters/
+```
+
+If no `chapter_index.md` is produced for a long source, stop before teaching. Read `source_structure.md`, explain why splitting did not happen, and ask whether to force a split level, use a smaller section, or continue unsplit.
 
 Do not split every source. After conversion, use structure analysis for long or complex sources:
 

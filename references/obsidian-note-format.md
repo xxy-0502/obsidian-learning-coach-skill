@@ -92,6 +92,29 @@ tags:
 
 ## 核心理解
 
+## STEM 结构化补充
+
+Use this section for engineering, mathematics, physics, chemistry, computer science, statistics, circuits, mechanics, thermodynamics, signals, algorithms, or other technical topics. Omit irrelevant fields, but do not replace the whole note with loose prose.
+
+- 定义：
+- 适用条件/前提假设：
+- 符号与变量：
+
+| 符号 | 含义 | 单位/类型 | 备注 |
+| --- | --- | --- | --- |
+
+- 核心公式/定理/算法：
+
+```text
+公式或伪代码
+```
+
+- 推导/原理步骤：
+  1. ...
+  2. ...
+- 边界条件/特例：
+- 量纲/复杂度/误差来源：
+
 ## 常见误区
 
 ## 例子
@@ -129,6 +152,37 @@ tags:
 ## 前置知识
 
 ## 核心讲解
+
+## STEM 结构化笔记
+
+Use this section when the lesson is technical. Keep explanations concise and organized for later review.
+
+### 定义与目标
+
+### 前提假设与适用范围
+
+### 符号、变量与单位
+
+| 符号 | 含义 | 单位/类型 | 来源 |
+| --- | --- | --- | --- |
+
+### 核心公式、定理或算法
+
+```text
+公式、定理陈述或伪代码
+```
+
+### 推导、证明或机制
+
+1.
+
+### 解题/实现步骤
+
+1.
+
+### 边界条件、近似与失效场景
+
+### 常见错误与检查方法
 
 ## 例子
 

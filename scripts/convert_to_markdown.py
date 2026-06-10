@@ -373,6 +373,7 @@ def convert_large_pdf_by_parts(
     output: Path,
     config: dict[str, str],
     max_pages: int,
+    cleanup_temp: bool,
 ) -> tuple[bool, str]:
     parts_root = output.parent / "parts"
     try:
@@ -391,7 +392,12 @@ def convert_large_pdf_by_parts(
 
     merge_part_markdown(converted_parts, output, src.stem)
     ranges = ", ".join(f"{start}-{end}" for _, start, end, _ in converted_parts)
-    return True, f"{output}\nSplit source into {len(converted_parts)} parts with page ranges: {ranges}"
+    if cleanup_temp:
+        shutil.rmtree(parts_root, ignore_errors=True)
+        cleanup_note = "\nCleaned temporary split files under parts/."
+    else:
+        cleanup_note = "\nKept temporary split files under parts/."
+    return True, f"{output}\nSplit source into {len(converted_parts)} parts with page ranges: {ranges}{cleanup_note}"
 
 
 def main() -> None:
@@ -402,6 +408,7 @@ def main() -> None:
     parser.add_argument("--env")
     parser.add_argument("--split-pages", type=int, default=DEFAULT_SPLIT_PAGES, help="Auto-split PDFs above this page count before MinerU conversion.")
     parser.add_argument("--no-auto-split", action="store_true", help="Disable automatic PDF splitting.")
+    parser.add_argument("--keep-parts", action="store_true", help="Keep temporary split PDFs and per-part Markdown under parts/.")
     args = parser.parse_args()
 
     src = Path(args.input)
@@ -430,7 +437,7 @@ def main() -> None:
     ):
         page_count = pdf_page_count(src)
         if page_count is not None and page_count > args.split_pages:
-            ok, message = convert_large_pdf_by_parts(src, output, config, args.split_pages)
+            ok, message = convert_large_pdf_by_parts(src, output, config, args.split_pages, cleanup_temp=not args.keep_parts)
             print(message)
             if not ok:
                 sys.exit(5)
