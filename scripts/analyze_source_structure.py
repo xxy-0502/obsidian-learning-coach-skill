@@ -11,7 +11,7 @@ from pathlib import Path
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 WORD_RE = re.compile(r"[A-Za-z0-9]+(?:[-_'][A-Za-z0-9]+)*")
-ARABIC_CHAPTER_RE = re.compile(r"^第\s*(\d+)\s*章\b")
+ARABIC_CHAPTER_RE = re.compile(r"^第\s*(\d+)\s*章")
 EN_CHAPTER_RE = re.compile(r"^Chapter\s+(\d+)\b", re.IGNORECASE)
 CN_NUMERAL_MAP = {
     "一": 1,
@@ -25,7 +25,7 @@ CN_NUMERAL_MAP = {
     "九": 9,
     "十": 10,
 }
-CN_CHAPTER_RE = re.compile(r"^第([一二三四五六七八九十]+)章\b")
+CN_CHAPTER_RE = re.compile(r"^第([一二三四五六七八九十]+)章")
 
 
 def count_text_units(text: str) -> int:
@@ -145,7 +145,7 @@ def analyze_source(
     large_unit_limit: int,
     min_headings: int,
 ) -> dict[str, object]:
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8-sig")
     lines = text.splitlines()
     headings = iter_markdown_headings(text)
     heading_counts = Counter(int(item["level"]) for item in headings)

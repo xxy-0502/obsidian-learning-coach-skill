@@ -54,6 +54,7 @@ def load_config(vault: Path, explicit_env: str | None) -> dict[str, str]:
         "MINERU_ENABLE_FORMULA",
         "MINERU_IS_OCR",
         "MINERU_MODEL_VERSION",
+        "MINERU_PAGE_RANGE",
         "MINERU_POLL_COUNT",
         "MINERU_POLL_INTERVAL",
     ]:
@@ -84,6 +85,17 @@ def pdf_page_count(src: Path) -> int | None:
         return None
     reader = PdfReader(str(src))
     return len(reader.pages)
+
+
+def pdf_page_count_stop_message(src: Path, split_pages: int) -> str:
+    return (
+        f"STOP: Cannot inspect PDF page count for auto-splitting: {src}\n"
+        "The pypdf package is required before converting PDFs with MinerU precise mode, "
+        "because large PDFs must be split before upload.\n"
+        f"Use a Python environment with pypdf installed, or rerun with --no-auto-split only after "
+        f"the user explicitly accepts uploading the unsplit PDF and any provider page limits. "
+        f"Current split threshold: {split_pages} pages."
+    )
 
 
 def split_pdf(src: Path, parts_dir: Path, max_pages: int) -> list[tuple[Path, int, int]]:
@@ -227,8 +239,11 @@ def extract_mineru_zip(zip_bytes: bytes, output: Path, preferred_stem: str) -> N
         for name in names:
             if name.endswith("/") or Path(name).suffix.lower() not in RESOURCE_EXTS:
                 continue
+            output_root = output.parent.resolve()
             target = (output.parent / name).resolve()
-            if not str(target).startswith(str(output.parent.resolve())):
+            try:
+                target.relative_to(output_root)
+            except ValueError:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
             with archive.open(name) as src, target.open("wb") as dst:
@@ -436,6 +451,9 @@ def main() -> None:
         and args.split_pages > 0
     ):
         page_count = pdf_page_count(src)
+        if page_count is None:
+            print(pdf_page_count_stop_message(src, args.split_pages), file=sys.stderr)
+            sys.exit(6)
         if page_count is not None and page_count > args.split_pages:
             ok, message = convert_large_pdf_by_parts(src, output, config, args.split_pages, cleanup_temp=not args.keep_parts)
             print(message)

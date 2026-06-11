@@ -14,8 +14,10 @@ Use when the user only gives a topic.
 8. Check the prior-knowledge answer. If it says "完全不懂", "零基础", "没学过", "不知道", "不理解", "只听过名字", "基础很差", or equivalent, mark the topic as foundation-first in `progress/[主题]/进度.md`.
 9. Create a foundation map before the first substantive lesson. Include prerequisites, beginner definitions, notation/tooling requirements, and a checkpoint for each item.
 10. If the topic is foundation-first or any prerequisite is not confirmed as mastered, write one or more foundation-level concept notes under `notes/[主题]/concepts/` before writing advanced concept notes. Use `level: foundation`.
-11. Create a first lesson, a small checkpoint, and an initial knowledge map. The first lesson must include `基础概念补齐`.
-12. In source sections, write: `通用知识讲解；用户未提供外部资料`.
+11. Create detailed concept notes for the lesson's reusable concepts before or alongside the lesson. A normal first lesson should create at least 3 concept notes under `notes/[主题]/concepts/`.
+12. Create a first lesson, a small checkpoint, and an initial knowledge map. The first lesson must include `基础概念补齐` and link only to concept notes that exist and contain complete explanations.
+13. Before finishing, run `python scripts/validate_concepts.py --vault LearningVault --topic "[主题]" --lesson "[lesson path]"`. If it fails, complete the missing concept notes and rerun it.
+14. In source sections, write: `通用知识讲解；用户未提供外部资料`.
 
 Do not invent sources. For time-sensitive or high-risk content, recommend verification before use.
 
@@ -41,8 +43,10 @@ Use when the user provides PDF, image, Office file, webpage, GitHub repo, pasted
 16. Check the prior-knowledge answer. If it says "完全不懂", "零基础", "没学过", "不知道", "不理解", "只听过名字", "基础很差", or equivalent, mark the topic as foundation-first in `progress/[主题]/进度.md`.
 17. Create a foundation map from the selected chapter/source section before the first substantive lesson. Identify terms, notation, tools, math, or background ideas that a beginner would need.
 18. If the topic is foundation-first or a prerequisite is needed and not confirmed as mastered, write it under `notes/[主题]/concepts/` as a foundation-level concept note before writing advanced concept notes. Use `level: foundation`. Mark source-grounded foundation items with the source ID; mark outside-source background as `资料外补充`.
-19. Create the first lesson and concept notes grounded in the supplied material. The first lesson must include `基础概念补齐`.
-20. Mark material outside the supplied source as `资料外补充`.
+19. Create detailed concept notes grounded in the supplied material for the lesson's reusable concepts. A normal source-first lesson should create at least 3 concept notes under `notes/[主题]/concepts/`, unless the selected source section truly has fewer reusable concepts.
+20. Create the first lesson grounded in the supplied material. The first lesson must include `基础概念补齐` and link only to concept notes that exist and contain complete explanations.
+21. Before finishing, run `python scripts/validate_concepts.py --vault LearningVault --topic "[主题]" --lesson "[lesson path]"`. If it fails, complete the missing concept notes and rerun it.
+22. Mark material outside the supplied source as `资料外补充`.
 
 ## Conversion Route
 
@@ -52,6 +56,19 @@ Use when the user asks only to convert a file to Markdown.
 2. Return the converted Markdown path, usually `LearningVault/inbox/converted/[source-name]/full.md`.
 3. Mention related media directory when present.
 4. Do not start lessons unless the user also asks to learn from it.
+
+## Planning Route
+
+Use when the user asks for an exam plan, learning path, roadmap, schedule, best path, or "how should I study before [date]" and does not ask for a concrete lesson.
+
+1. Initialize the vault and topic if needed.
+2. Read `settings/background.md`, `settings/glossary.md`, and the topic progress files.
+3. If source material exists, read `chapter_index.md` first. Use the chapter index to sequence the plan; do not read or summarize the whole `full.md` just to make a plan.
+4. Write goals, deadline, baseline, constraints, weekly/daily path, and next action to `progress/[topic]/进度.md`.
+5. Write review timing, mock checkpoints, and spaced review dates to `progress/[topic]/复习计划.md`.
+6. Update `notes/[topic]/maps/知识地图.md` only for prerequisite order and major chapter relationships.
+7. Update `notes/[topic]/index.md` only as a light entry page linking to the progress plan, review plan, knowledge map, and current lesson if one exists.
+8. Do not create a file under `notes/[topic]/lessons/` for the plan. Create a lesson only when the user asks to learn a concrete chapter, concept cluster, worked example, or checkpoint.
 
 ## Review Route
 
@@ -76,3 +93,15 @@ For learning sessions, keep the response focused:
 - 下一步
 
 For STEM topics, the chat explanation may use plain language, but the durable lesson and concept notes must be structured. Do not save only conversational prose.
+
+## Concept Completion Gate
+
+Run this gate before reporting that a lesson is finished.
+
+1. List every reusable concept named in `本课概念`, `基础概念补齐`, and stable `[[双链]]` links.
+2. For each concept, check `notes/[topic]/concepts/[concept].md`.
+3. If the file is missing, empty, or contains only headings/backlinks/one-line definitions, write the full concept note.
+4. A full concept note must include: definition, problem solved, why it matters, core explanation, example, common confusion or boundary condition, active recall, relationship notes, and source/provenance.
+5. For STEM concepts, include definitions, assumptions/conditions, variables or units when relevant, mechanism/formula/algorithm when relevant, boundary conditions, common mistakes, and a worked or tiny example.
+6. Run `python scripts/validate_concepts.py --vault LearningVault --topic "[topic]" --lesson "[lesson path]"`.
+7. If the script prints `STOP: Concept completion gate failed.`, do not report the lesson as complete. Fix the listed concept files and rerun the gate.

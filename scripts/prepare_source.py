@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -16,7 +17,8 @@ LONG_SOURCE_UNITS = 20000
 def run_command(args: list[str]) -> str:
     result = subprocess.run(args, text=True, capture_output=True)
     if result.returncode != 0:
-        message = result.stderr.strip() or result.stdout.strip()
+        parts = [part.strip() for part in [result.stdout, result.stderr] if part and part.strip()]
+        message = "\n".join(parts)
         raise RuntimeError(message or f"Command failed: {' '.join(args)}")
     return result.stdout.strip()
 
@@ -26,10 +28,12 @@ def default_output_path(src: Path, vault: Path) -> Path:
 
 
 def parse_last_path(output: str, suffix: str) -> Path | None:
+    pattern = re.compile(rf"([A-Za-z]:[^\r\n]*?{re.escape(suffix)}|/[^\r\n]*?{re.escape(suffix)}|[^\s\r\n]+{re.escape(suffix)})$")
     for line in reversed(output.splitlines()):
         stripped = line.strip()
         if stripped.endswith(suffix):
-            return Path(stripped)
+            match = pattern.search(stripped)
+            return Path(match.group(1) if match else stripped)
     return None
 
 
@@ -47,6 +51,7 @@ def main() -> None:
     parser.add_argument("--env")
     parser.add_argument("--split-pages", type=int, default=180)
     parser.add_argument("--keep-parts", action="store_true", help="Keep temporary PDF part files from conversion.")
+    parser.add_argument("--no-auto-split", action="store_true", help="Disable automatic PDF splitting; use only after explicit user consent.")
     parser.add_argument("--force-chapters", action="store_true", help="Build a chapter index even when analysis is index_only.")
     parser.add_argument("--no-chapter-index", action="store_true", help="Only convert and analyze; do not build chapters.")
     args = parser.parse_args()
@@ -79,16 +84,24 @@ def main() -> None:
         command.extend(["--env", args.env])
     if args.keep_parts:
         command.append("--keep-parts")
-    print(run_command(command))
+    if args.no_auto_split:
+        command.append("--no-auto-split")
+    try:
+        print(run_command(command))
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
 
-    analysis_output = run_command(
-        [
-            sys.executable,
-            str(script_dir / "analyze_source_structure.py"),
-            "--input",
-            str(converted),
-        ]
-    )
+    try:
+        analysis_output = run_command(
+            [
+                sys.executable,
+                str(script_dir / "analyze_source_structure.py"),
+                "--input",
+                str(converted),
+            ]
+        )
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
     print(analysis_output)
 
     analysis_json = parse_last_path(analysis_output, "source_structure.json") or converted.parent / "source_structure.json"

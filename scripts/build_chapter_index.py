@@ -12,9 +12,9 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 INVALID_FILENAME_RE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 WORD_RE = re.compile(r"[A-Za-z0-9]+(?:[-_'][A-Za-z0-9]+)*")
-ARABIC_CHAPTER_RE = re.compile(r"^第\s*(\d+)\s*章\b")
+ARABIC_CHAPTER_RE = re.compile(r"^第\s*(\d+)\s*章")
 EN_CHAPTER_RE = re.compile(r"^Chapter\s+(\d+)\b", re.IGNORECASE)
-CN_CHAPTER_RE = re.compile(r"^第([一二三四五六七八九十]+)章\b")
+CN_CHAPTER_RE = re.compile(r"^第([一二三四五六七八九十]+)章")
 CN_NUMERAL_MAP = {
     "一": 1,
     "二": 2,
@@ -279,7 +279,7 @@ def collect_boundary_sections(
 
 
 def write_chapters(src: Path, output_dir: Path, split_level: int, include_preface: bool) -> dict[str, object]:
-    text = src.read_text(encoding="utf-8")
+    text = src.read_text(encoding="utf-8-sig")
     lines = text.splitlines()
     headings = find_headings(lines)
     sections = collect_sections(lines, headings, split_level, include_preface)
@@ -332,7 +332,7 @@ def write_chapters_from_boundaries(
     boundaries: list[dict[str, object]],
     include_preface: bool,
 ) -> dict[str, object]:
-    text = src.read_text(encoding="utf-8")
+    text = src.read_text(encoding="utf-8-sig")
     lines = text.splitlines()
     headings = find_headings(lines)
     sections = collect_boundary_sections(lines, headings, boundaries, include_preface)
@@ -416,7 +416,7 @@ def main() -> None:
     output_dir = Path(args.output_dir) if args.output_dir else src.parent
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    lines = src.read_text(encoding="utf-8").splitlines()
+    lines = src.read_text(encoding="utf-8-sig").splitlines()
     headings = find_headings(lines)
     if args.level == "auto":
         boundaries = best_chapter_sequence(headings, len(lines), lines)
