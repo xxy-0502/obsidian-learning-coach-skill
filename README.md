@@ -27,7 +27,10 @@ Obsidian Learning Coach 是一个面向 Agent Skills 运行环境的学习教练
 - 概念笔记：把可复用概念写入 `concepts/`，并使用 Obsidian 双链连接相关概念；当学习者先验知识是零基础或完全不懂时，先写入 `level: foundation` 的基础概念笔记。
 - 课程笔记：把每次学习内容写入 `lessons/`，包含目标、讲解、例子和主动回忆问题。
 - STEM 结构化笔记：学习工科、理科、数学、算法、电路、力学、控制、信号等主题时，笔记会包含定义、适用条件、变量单位、公式/算法、推导步骤、边界条件、常见错误和检查方法。
-- 知识地图：维护 `maps/知识地图.md`，帮助看清概念关系。
+- 知识地图：维护 `maps/[课程名]知识地图.md`，帮助看清概念关系并避免多课程地图重名。
+- 知识地图自动维护：从课程和概念笔记的双链中更新知识地图自动区，同时保留手写内容。
+- 学习 Dashboard：生成 `LearningVault/dashboard.md`，汇总今日复习、缺失概念、待补全概念和主题状态。
+- 学习 Eval Gate：把每节课当成一次可验证学习实验，只有通过概念、回忆题、验证题库和遗漏检查后才进入下一课。
 - 掌握度判断：通过小测、复述、例子和追问判断是否可以进入下一课。
 - 错题遗漏追踪：把理解错误、遗漏条件、混淆点记录到 `错题与遗漏.md`。
 - 间隔复习：维护 `复习计划.md`，支持到期复习、复习记录和下次复习日期。
@@ -69,9 +72,27 @@ obsidian-learning-coach/
 ├─ references/
 │  ├─ workflow.md
 │  ├─ obsidian-note-format.md
+│  ├─ script-commands.md
+│  ├─ routes/
+│  │  ├─ topic-first.md
+│  │  ├─ source-first.md
+│  │  ├─ conversion.md
+│  │  ├─ planning.md
+│  │  ├─ review.md
+│  │  ├─ session-output.md
+│  │  └─ concept-completion-gate.md
+│  ├─ templates/
+│  │  ├─ concept-note.md
+│  │  ├─ lesson-note.md
+│  │  ├─ progress-plan.md
+│  │  ├─ source-index.md
+│  │  ├─ topic-index.md
+│  │  ├─ vault-layout.md
+│  │  └─ knowledge-map.md
 │  ├─ mastery-and-review.md
 │  ├─ source-grounding.md
 │  ├─ conversion.md
+│  ├─ learning-system-maintenance.md
 │  ├─ glossary.md
 │  └─ personalization.md
 └─ scripts/
@@ -79,6 +100,13 @@ obsidian-learning-coach/
    ├─ init_topic.py
    ├─ prepare_source.py
    ├─ convert_to_markdown.py
+   ├─ analyze_source_structure.py
+   ├─ build_chapter_index.py
+   ├─ validate_concepts.py
+   ├─ run_learning_eval.py
+   ├─ update_knowledge_map.py
+   ├─ migrate_knowledge_maps.py
+   ├─ build_dashboard.py
    ├─ scan_due_reviews.py
    ├─ update_review_plan.py
    └─ extract_glossary.py
@@ -88,7 +116,7 @@ obsidian-learning-coach/
 
 ### 方式一：作为 Agent Skill 使用
 
-把本仓库放到你的运行环境的 skills 目录下。例如，在 Codex 中可以放到：
+把本仓库放到你的运行环境的 skills 目录下。例如，某些本地运行环境的目录可能类似：
 
 ```text
 C:\Users\<你的用户名>\.codex\skills\obsidian-learning-coach
@@ -515,7 +543,7 @@ LearningVault/
 │     ├─ concepts/
 │     ├─ lessons/
 │     ├─ maps/
-│     │  └─ 知识地图.md
+│     │  └─ [主题]知识地图.md
 │     └─ sources/
 │        └─ 来源索引.md
 ├─ progress/
@@ -539,6 +567,10 @@ LearningVault/
 - `scripts/convert_to_markdown.py`：把资料转换为 Markdown。
 - `scripts/analyze_source_structure.py`：分析转换后的 Markdown 是否适合建立章节索引。
 - `scripts/build_chapter_index.py`：按稳定标题层级生成章节索引和 `chapters/` 文件。
+- `scripts/run_learning_eval.py`：运行 lesson 级学习 eval gate，并把结果写入 `进度.md` 的学习实验记录。
+- `scripts/update_knowledge_map.py`：从课程和概念双链更新 `maps/[主题]知识地图.md` 的自动维护区。
+- `scripts/migrate_knowledge_maps.py`：把旧的 `maps/知识地图.md` 迁移到 `maps/[主题]知识地图.md` 并修复入口链接。
+- `scripts/build_dashboard.py`：生成 `LearningVault/dashboard.md`，汇总到期复习、概念缺口和主题状态。
 - `scripts/scan_due_reviews.py`：扫描到期复习内容。
 - `scripts/update_review_plan.py`：更新复习计划和复习记录。
 - `scripts/extract_glossary.py`：从笔记或资料中辅助提取术语。

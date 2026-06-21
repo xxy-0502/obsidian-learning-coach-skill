@@ -11,11 +11,23 @@ def read_repo_file(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
+def read_note_templates(*names: str) -> str:
+    return "\n".join(
+        read_repo_file(f"references/templates/{name}.md") for name in names
+    )
+
+
+def read_routes(*names: str) -> str:
+    return "\n".join(
+        read_repo_file(f"references/routes/{name}.md") for name in names
+    )
+
+
 class SkillRuleTests(unittest.TestCase):
     def test_planning_route_keeps_roadmaps_out_of_lessons(self):
         skill = read_repo_file("SKILL.md")
-        workflow = read_repo_file("references/workflow.md")
-        note_format = read_repo_file("references/obsidian-note-format.md")
+        workflow = read_routes("planning")
+        note_format = read_note_templates("progress-plan")
         combined = "\n".join([skill, workflow, note_format])
 
         self.assertIn("Use Planning Route", skill)
@@ -36,7 +48,7 @@ class SkillRuleTests(unittest.TestCase):
 
     def test_stem_notes_require_reviewable_structure(self):
         skill = read_repo_file("SKILL.md")
-        note_format = read_repo_file("references/obsidian-note-format.md")
+        note_format = read_note_templates("lesson-note")
 
         required_terms = [
             "definitions",
@@ -63,8 +75,12 @@ class SkillRuleTests(unittest.TestCase):
 
     def test_lessons_must_create_complete_concept_notes(self):
         skill = read_repo_file("SKILL.md")
-        workflow = read_repo_file("references/workflow.md")
-        note_format = read_repo_file("references/obsidian-note-format.md")
+        workflow = read_routes(
+            "topic-first",
+            "source-first",
+            "concept-completion-gate",
+        )
+        note_format = read_note_templates("concept-note")
         combined = "\n".join([skill, workflow, note_format])
 
         self.assertIn("Do not leave `concepts/` empty", skill)
@@ -72,6 +88,8 @@ class SkillRuleTests(unittest.TestCase):
         self.assertIn("Concept Completion Checklist", note_format)
         self.assertIn("scripts/validate_concepts.py", skill)
         self.assertIn("scripts/validate_concepts.py", workflow)
+        self.assertIn("scripts/run_learning_eval.py", skill)
+        self.assertIn("scripts/run_learning_eval.py", workflow)
         self.assertIn("at least 3 concept notes", combined)
 
         required_content = [

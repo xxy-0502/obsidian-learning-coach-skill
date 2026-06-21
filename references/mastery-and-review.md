@@ -38,8 +38,8 @@ Borrow the Plus-style learning loop: after every lesson or review session, updat
 
 Maintain only these three files in `progress/[主题]/`:
 
-- `进度.md`: basic topic metadata, last learning/review dates, course progress, and current status.
-- `错题与遗漏.md`: active missed points and resolved missed points.
+- `进度.md`: basic topic metadata, success criteria, learning experiment records, course progress, and current status.
+- `错题与遗漏.md`: active missed points, validation questions, and resolved missed points.
 - `复习计划.md`: review rules, due-review queue, and review records.
 
 Use exact filenames so review routes can find them reliably.
@@ -55,14 +55,27 @@ Use exact filenames so review routes can find them reliably.
 - 学习目标：
 - 目标程度：了解概念 / 能独立运用 / 深度精通
 - 先验知识：
+- 基础状态：未评估 / foundation-first / ready
 - 最后学习日期：YYYY-MM-DD
 - 最后复习日期：YYYY-MM-DD 或 —
+
+## 成功标准
+
+- 能闭卷解释核心概念：
+- 能举出新例子：
+- 能区分易混淆概念：
+- 能完成迁移应用：
 
 ## 课程进度
 
 | 课程 | 完成日期 | 掌握程度 | 下次复习 | 关键误区 |
 | --- | --- | --- | --- | --- |
 | 01_核心概念 | — | — | — | — |
+
+## 学习实验记录
+
+| 日期 | 课程 | 掌握判断 | Eval结果 | 决策 | 主要原因 |
+| --- | --- | --- | --- | --- | --- |
 
 ## 当前状态
 
@@ -80,6 +93,11 @@ Use exact filenames so review routes can find them reliably.
 
 | 日期 | 来源课程 | 遗漏点 | 原回答问题 | 正确理解 | 下次复习重点 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- |
+
+## 验证题库
+
+| 日期 | 来源课程 | 题型 | 题目 | 期望证据 | 状态 |
+| --- | --- | --- | --- | --- | --- |
 
 ## 已解决遗漏
 

@@ -17,30 +17,27 @@ Create maintainable Obsidian learning assets while coaching the learner through 
 6. After receiving Start Assessment answers, record topic-specific goals and constraints in `progress/[主题]/进度.md` before teaching.
 7. Update `LearningVault/settings/background.md` only when the user explicitly asks to update their background or confirms that stable preferences from the assessment should become global background.
 8. Load only the reference file needed for the current task:
-   - `references/workflow.md` for routing and session flow.
-   - `references/obsidian-note-format.md` for note templates.
+   - `references/routes/*.md` for the exact workflow route; use `references/workflow.md` only when unsure which route applies.
+   - `references/templates/*.md` for the exact note template needed; use `references/obsidian-note-format.md` only when unsure which template applies.
+   - `references/script-commands.md` for the full command table.
    - `references/personalization.md` for learner background handling.
    - `references/glossary.md` for terminology rules.
    - `references/conversion.md` for Markdown conversion.
+   - `references/learning-system-maintenance.md` for knowledge map migration, automatic map updates, and dashboard refresh.
    - `references/mastery-and-review.md` for checkpoints, mastery, and review.
    - `references/source-grounding.md` for source indexes and citation limits.
 
-## Script Quick Reference
+## Core Commands
 
 Use these commands from the skill directory or adjust paths to the current workspace.
+Load `references/script-commands.md` for source preparation, conversion, knowledge map, dashboard, review, and other less frequent commands.
 
 | Task | Command |
 | --- | --- |
 | Initialize vault | `python scripts/init_vault.py --vault LearningVault` |
-| Initialize topic-first topic | `python scripts/init_topic.py --vault LearningVault --topic "[主题]" --mode topic-first` |
-| Initialize source-first topic | `python scripts/init_topic.py --vault LearningVault --topic "[主题]" --mode source-first` |
-| Prepare long or complex source | `python scripts/prepare_source.py --input "[path]" --vault LearningVault` |
-| Convert material to Markdown | `python scripts/convert_to_markdown.py --input "[path]" --vault LearningVault` |
-| Analyze converted source | `python scripts/analyze_source_structure.py --input "LearningVault/inbox/converted/[source-name]/full.md"` |
-| Build chapter index | `python scripts/build_chapter_index.py --input "LearningVault/inbox/converted/[source-name]/full.md"` |
+| Initialize topic | `python scripts/init_topic.py --vault LearningVault --topic "[主题]" --mode topic-first` |
 | Validate lesson concepts | `python scripts/validate_concepts.py --vault LearningVault --topic "[主题]" --lesson "notes/[主题]/lessons/[lesson].md"` |
-| Scan due reviews | `python scripts/scan_due_reviews.py --vault LearningVault --date YYYY-MM-DD` |
-| Update review state | `python scripts/update_review_plan.py --vault LearningVault --topic "[主题]" --lesson "[课程]" --result "[掌握度]" --date YYYY-MM-DD` |
+| Run learning eval gate | `python scripts/run_learning_eval.py --vault LearningVault --topic "[主题]" --lesson "notes/[主题]/lessons/[lesson].md" --result "[掌握度]"` |
 
 ## Route The Request
 
@@ -56,7 +53,7 @@ Use Review Route when the user asks about due reviews, reviewing a topic, missed
 
 Use Conversion Route when the user only asks to convert material to Markdown. Do not begin the learning workflow unless they also ask to learn from it.
 
-Use Planning Route when the user asks for an exam plan, learning path, schedule, route, roadmap, best path, or study arrangement without asking for a concrete lesson. Store plans in `progress/[topic]/` and optionally update `notes/[topic]/index.md` and `notes/[topic]/maps/知识地图.md`. Do not create `notes/[topic]/lessons/00_学习路径.md`, `00_考试学习路径.md`, or any plan/roadmap file under `lessons/`.
+Use Planning Route when the user asks for an exam plan, learning path, schedule, route, roadmap, best path, or study arrangement without asking for a concrete lesson. Store plans in `progress/[topic]/` and optionally update `notes/[topic]/index.md` and `notes/[topic]/maps/[主题]知识地图.md`. Do not create `notes/[topic]/lessons/00_学习路径.md`, `00_考试学习路径.md`, or any plan/roadmap file under `lessons/`.
 
 ## Start Assessment
 
@@ -89,7 +86,7 @@ After the user answers, separate the information:
 - Teach one lesson or checkpoint at a time; never generate the entire course at once by default.
 - For large source-first materials with `chapter_index.md`, choose the current chapter from the index before teaching. Do not read or summarize the whole `full.md` unless the user explicitly asks for a whole-source overview or the source is small enough to avoid splitting.
 - Never assume the learner already knows the foundational concepts. If the start assessment or progress file says "完全不懂", "零基础", "没学过", "不知道", "不理解", "只听过名字", "基础很差", or equivalent, treat the topic as foundation-first.
-- Before the first substantive lesson for a new topic, create or update a foundation map in `notes/[主题]/maps/知识地图.md`: key prerequisites, plain-language definitions, required symbols/terms, and "must know before continuing" checkpoints.
+- Before the first substantive lesson for a new topic, create or update a foundation map in `notes/[主题]/maps/[主题]知识地图.md`: key prerequisites, plain-language definitions, required symbols/terms, and "must know before continuing" checkpoints. Name the map file with the course/topic name plus `知识地图`.
 - If a prerequisite is not confirmed by the learner or is needed to understand the current lesson, write it as a foundation-level concept note under `notes/[主题]/concepts/` before writing advanced concept notes. Use `type: concept` and `level: foundation` in frontmatter. Foundation-level concept notes should answer: what it is, why it matters, what problem it solves, one tiny example, and one active-recall question.
 - Each lesson must include a "基础概念补齐" section when the learner is foundation-first or when the lesson depends on terms, notation, math, tools, or background ideas that a beginner may not know. If no foundation is needed, state that the lesson has no new prerequisite beyond the current topic progress.
 - Every lesson must create or update detailed concept notes for the reusable concepts it names in `本课概念`, `基础概念补齐`, or stable `[[双链]]` links. Do not leave `notes/[主题]/concepts/` empty after generating a lesson. For a normal lesson, create at least 3 concept notes unless the lesson truly has fewer than 3 reusable concepts; explain the exception in the lesson's source/write log.
@@ -97,12 +94,14 @@ After the user answers, separate the information:
 - Use Feynman-style plain explanation, Socratic questions, scaffolding, examples, and short active-recall checks.
 - For STEM topics such as engineering, mathematics, physics, chemistry, computer science, statistics, control, circuits, mechanics, thermodynamics, signals, algorithms, or other technical subjects, keep the conversational explanation plain but write durable notes in a structured technical format. Include definitions, assumptions, variables, units, formulas, derivation or reasoning steps, worked examples, boundary conditions, common mistakes, and active-recall checks when relevant.
 - Do not move forward when the learner has not mastered the prerequisite.
-- Write durable Obsidian notes separately from session coaching: topic entry pages go in `notes/[主题]/index.md`; lessons go in `notes/[主题]/lessons/`; reusable and foundation-level concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/知识地图.md`; progress state goes in `progress/[主题]/`.
+- Write durable Obsidian notes separately from session coaching: topic entry pages go in `notes/[主题]/index.md`; lessons go in `notes/[主题]/lessons/`; reusable and foundation-level concepts go in `notes/[主题]/concepts/`; maps go in `notes/[主题]/maps/[主题]知识地图.md`; progress state goes in `progress/[主题]/`.
 - Plans, exam schedules, learning paths, review calendars, route maps, and "what should I study before date X" outputs are progress assets, not lessons. Write them to `progress/[topic]/进度.md`, `progress/[topic]/复习计划.md`, or a clearly named plan file under `progress/[topic]/`. Only write to `lessons/` when teaching a concrete chapter, concept cluster, worked example, or checkpoint.
 - Keep `notes/[主题]/index.md` as a light course entry page only. It should link to a few entry points such as the knowledge map and current lesson; do not use it as a concept list, knowledge map, or progress page.
-- Put concept relationships, learning paths, prerequisites, comparisons, and review structure in `notes/[主题]/maps/知识地图.md`; put goals, mastery state, review dates, mistakes, and next steps in `progress/[主题]/`.
+- Put concept relationships, learning paths, prerequisites, comparisons, and review structure in `notes/[主题]/maps/[主题]知识地图.md`; put goals, mastery state, review dates, mistakes, and next steps in `progress/[主题]/`.
+- If an existing topic still has `notes/[主题]/maps/知识地图.md`, run `scripts/migrate_knowledge_maps.py --vault LearningVault` before updating maps.
+- After creating or revising lessons, concept notes, plans, or reviews, run `scripts/update_knowledge_map.py --vault LearningVault --topic "[主题]"`; refresh `LearningVault/dashboard.md` with `scripts/build_dashboard.py` when the user asks what to study, what is missing, or what needs maintenance.
 - Use `[[双链]]` only for stable, reusable, review-worthy concepts and important entry pages. Avoid linking ordinary words, broad generic labels, one-off mentions, or temporary headings. Prefer relationship sentences such as `[[A]] 是 [[B]] 的前置概念` over bare related-link lists.
-- Before finishing a lesson, run `python scripts/validate_concepts.py --vault LearningVault --topic "[主题]" --lesson "[lesson path]"`. If the gate fails, create or complete the missing concept notes before reporting the lesson done.
+- Before finishing a lesson, run `python scripts/validate_concepts.py --vault LearningVault --topic "[主题]" --lesson "[lesson path]"`, then `python scripts/run_learning_eval.py --vault LearningVault --topic "[主题]" --lesson "[lesson path]" --result "[掌握度]"`. If either gate fails, do not advance; create a remedial lesson or rebuild prerequisites according to the eval decision.
 - Use tags like `learning/[主题]`.
 - Prefer glossary translations from `settings/glossary.md`; do not overwrite existing glossary entries automatically.
 - Use absolute dates for review plans and logs.
@@ -127,6 +126,7 @@ After the user answers, separate the information:
 | `chapter_index.md` exists but relevant chapter is unclear | Read the chapter index and propose 1-3 likely chapter choices | **STOP:** wait for the user to choose unless the request clearly names a chapter or section |
 | Review files are missing for an existing topic | Recreate the Plus three-file progress set only when the topic path is clear | Mention that prior review history may be incomplete |
 | Concept validation fails after a lesson | Read the STOP output from `scripts/validate_concepts.py` | Create or complete the missing/incomplete concept notes, rerun validation, and do not report the lesson complete until it passes |
+| Learning eval returns `remedial_lesson` or `prerequisite_rebuild` | Read `scripts/run_learning_eval.py` output and the new row in `进度.md` | Do not advance to the next lesson; use `错题与遗漏.md` and `验证题库` as the next teaching input |
 | User asks only for conversion | Run Conversion Route only | Do not start teaching unless the user separately asks to learn from the converted material |
 
 ## Hard Rules
