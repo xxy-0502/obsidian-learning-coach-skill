@@ -9,6 +9,7 @@ When files are written, keep the chat response short:
 - lesson path
 - what the lesson contains
 - what the user should write in `notes/`
+- the next interactive checkpoint, if the user wants to continue
 
 ## Lesson Sections
 
@@ -22,6 +23,7 @@ Use these sections:
 - 易错点
 - 结构图任务
 - 自检问题
+- 下一步互动检查
 - 个人笔记入口
 
 ## Forbidden Shapes

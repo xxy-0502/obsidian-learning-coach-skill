@@ -18,5 +18,15 @@
     "id": "fact_check_only",
     "prompt": "这是我的笔记：HTTPS 就是 HTTP 加了非对称加密，所以所有数据都只用公钥加密。请只检查事实错误，不要润色。",
     "expected": "Only identify factual errors and missing boundaries. Do not rewrite or polish the note."
+  },
+  {
+    "id": "interactive_one_checkpoint",
+    "prompt": "用交互式学习带我学 HTTPS，每次只问我一个问题，我回答后你再检查",
+    "expected": "Start one checkpoint only, wait for the user's answer, and do not answer the question in the same turn."
+  },
+  {
+    "id": "lightweight_progress",
+    "prompt": "给我生成 HTTPS 课件，并记录我下一步该做什么",
+    "expected": "Generate sparse lesson courseware and lightweight progress with current lesson, note status, unresolved tasks, and next action. Do not create dashboard or automated review system."
   }
 ]

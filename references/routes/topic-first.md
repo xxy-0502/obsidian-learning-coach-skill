@@ -14,8 +14,9 @@ LearningVault/topics/[topic]/lessons/
 ```
 
 5. Create `LearningVault/topics/[topic]/notes/README.md` if missing.
-6. Do not write the user's personal note.
-7. End with a reconstruction task and tell the user to write their own note in `notes/`.
+6. Create or update `LearningVault/topics/[topic]/progress.md` when files are requested.
+7. Do not write the user's personal note.
+8. End with a reconstruction task and offer one interactive checkpoint.
 
 ## Beginner Handling
 
@@ -34,5 +35,6 @@ The lesson must contain:
 - common misconceptions
 - diagram or reconstruction task
 - self-check questions
+- one next interactive checkpoint
 
 The lesson must not contain complete personal understanding, polished summaries, or long explanatory paragraphs.
