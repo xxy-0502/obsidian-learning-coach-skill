@@ -1,12 +1,13 @@
-# Lesson Note Template
+# Lesson Courseware Template
 
-Lessons are for concrete teaching sessions only: a chapter, concept cluster, worked example, lab, problem set, or checkpoint. Do not use the lesson template for exam plans, learning paths, roadmaps, or schedules.
+Lessons are AI-generated courseware, not personal notes.
 
 ````markdown
 ---
 type: lesson
 topic: [主题]
-lesson: [课程名]
+lesson: [课件名]
+author: ai
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 tags:
@@ -14,52 +15,52 @@ tags:
   - lesson
 ---
 
-# [课程名]
+# [课件名]
 
-## 今日目标
+## 入口假设
 
-## 基础概念补齐
+- 学习者状态：
+- 本课只处理：
 
-## 前置知识
+## 前置概念
 
-## 核心讲解
+| 概念 | 一句定义 | 不懂会卡在哪里 |
+| --- | --- | --- |
 
-## STEM 结构化笔记
+## 核心定义
 
-Use this section when the lesson is technical. Keep explanations concise and organized for later review.
+| 术语 | 定义 | 边界 |
+| --- | --- | --- |
 
-### 定义与目标
+## 原理骨架
 
-### 前提假设与适用范围
+1. [步骤名]
+   - 发生什么：
+   - 为什么需要：
 
-### 符号、变量与单位
+## 边界条件
 
-| 符号 | 含义 | 单位/类型 | 来源 |
-| --- | --- | --- | --- |
+- 适用：
+- 不适用：
 
-### 核心公式、定理或算法
+## 易错点
 
-```text
-公式、定理陈述或伪代码
-```
+| 错误说法 | 错在哪里 |
+| --- | --- |
 
-### 推导、证明或机制
+## 结构图任务
+
+- 你要画：
+- 必须出现：
+- 箭头/关系要求：
+
+## 自检问题
 
 1.
+2.
+3.
 
-### 解题/实现步骤
+## 个人笔记入口
 
-1.
-
-### 边界条件、近似与失效场景
-
-### 常见错误与检查方法
-
-## 例子
-
-## 主动回忆
-
-## 本课概念
-
-## 来源
+在 `notes/` 中写你自己的解释、类比、图、复述和疑问。AI 不代写这一部分。
 ````

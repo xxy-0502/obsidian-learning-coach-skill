@@ -1,4 +1,0 @@
-interface:
-  display_name: "Obsidian Learning Coach"
-  short_description: "Obsidian-based tutor for lessons, notes, mastery, and review."
-  default_prompt: "Use $obsidian-learning-coach to learn a topic with Obsidian notes, checkpoints, and spaced review."

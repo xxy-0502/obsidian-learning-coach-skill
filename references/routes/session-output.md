@@ -1,14 +1,37 @@
 # Session Output Shape
 
-For learning sessions, keep the response focused:
+For courseware sessions, use sparse output.
 
-- 今日目标
-- 基础概念补齐
+## Chat Summary
+
+When files are written, keep the chat response short:
+
+- lesson path
+- what the lesson contains
+- what the user should write in `notes/`
+
+## Lesson Sections
+
+Use these sections:
+
+- 入口假设
+- 前置概念
+- 核心定义
+- 原理骨架
+- 边界条件
+- 易错点
+- 结构图任务
+- 自检问题
+- 个人笔记入口
+
+## Forbidden Shapes
+
+Do not output:
+
 - 本课讲解
-- STEM 结构化笔记, when the topic is technical: definitions, assumptions, symbols/units, formulas or algorithms, derivation/mechanism, boundary conditions, common mistakes
-- 例子
-- 主动回忆检查
-- 写入/更新的 Obsidian 文件
-- 下一步
+- 核心理解
+- 长段例子
+- 完整总结
+- 替用户写好的 Obsidian 笔记
 
-For STEM topics, the chat explanation may use plain language, but the durable lesson and concept notes must be structured. Do not save only conversational prose.
+Definitions and principles are allowed. Explanatory prose that removes the user's reconstruction work is not allowed.

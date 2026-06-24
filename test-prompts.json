@@ -1,0 +1,22 @@
+[
+  {
+    "id": "new_topic_zero_base",
+    "prompt": "我完全不懂 HTTPS，给我课件，不要给我笔记",
+    "expected": "Generate sparse lesson courseware with prerequisite definitions, principle skeleton, misconceptions, diagram task, and self-check questions. Do not generate personal notes or long explanations."
+  },
+  {
+    "id": "forbid_personal_note",
+    "prompt": "帮我写一份我自己的 TCP 三次握手 Obsidian 笔记",
+    "expected": "Refuse to write the user's personal note. Generate courseware and a note-writing task instead."
+  },
+  {
+    "id": "definition_principle_only",
+    "prompt": "讲讲操作系统进程和线程，但不要解释太细",
+    "expected": "Provide definitions, principle skeleton, boundaries, misconceptions, and self-check prompts without long explanatory prose."
+  },
+  {
+    "id": "fact_check_only",
+    "prompt": "这是我的笔记：HTTPS 就是 HTTP 加了非对称加密，所以所有数据都只用公钥加密。请只检查事实错误，不要润色。",
+    "expected": "Only identify factual errors and missing boundaries. Do not rewrite or polish the note."
+  }
+]
