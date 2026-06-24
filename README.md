@@ -8,7 +8,7 @@
 - 用户生成 `notes/`：自己的解释、类比、图、复述、总结和疑问。
 - AI 生成 `checks/` 或聊天反馈：只做事实核查，不润色、不重写。
 - AI 通过 `interactions/` 做交互式检查：一题一答，先让用户尝试，再纠偏。
-- AI 维护轻量 `progress.md`：安排学习路线、当前课件、笔记状态、复习、踩坑和下一步。
+- AI 维护三份轻量状态文件：`学习路线.md`、`错题遗漏.md`、`复习计划.md`。
 
 这个 skill 不追求让 AI 把知识讲到顺滑可读。它追求让用户必须亲手重构理解。
 
@@ -48,7 +48,9 @@ LearningVault/
       notes/
       checks/
       interactions/
-      progress.md
+      学习路线.md
+      错题遗漏.md
+      复习计划.md
 ```
 
 ## lesson 是什么
@@ -102,7 +104,7 @@ LearningVault/
 - 你先回答
 - AI 只纠正你的答案
 - 通过后进入下一题
-- 必要时记录到 `interactions/` 和 `progress.md`
+- 必要时记录到 `interactions/`、`学习路线.md`、`错题遗漏.md` 和 `复习计划.md`
 
 常见题型：
 
@@ -113,27 +115,22 @@ LearningVault/
 - 找出错误说法
 - 把原理迁移到一个小例子
 
-## progress 是什么
+## 三个状态文件是什么
 
-`progress.md` 是学习路线和状态表，不写知识解释：
+三份状态文件都不写知识解释：
 
-- 学习路线
-- 当前 lesson
-- 用户 note 是否完成
-- 最近互动是否通过
-- 未解决错误
-- 下一步动作
-- 坑点记录
-- 轻量复看日期
+- `学习路线.md`：学习路线、当前 lesson、用户 note 状态、下一步动作
+- `错题遗漏.md`：预判坑点、真实踩坑、遗漏条件、正确边界
+- `复习计划.md`：复习队列、复习记录、下次复看日期
 
-学习时必须先看 `progress.md`，按第一条未完成项目继续。
+学习时必须先看这三份文件，按 `学习路线.md` 第一条未完成项目继续。
 
 ## review 是什么
 
 复习不是重新讲课，而是到期后先考你：
 
-- 先从 `progress.md` 的 `轻量复看` 找到期项目
-- 优先复习 `坑点记录` 里的错误
+- 先从 `复习计划.md` 的 `复习队列` 找到期项目
+- 优先复习 `错题遗漏.md` 里的错误
 - AI 先问问题，等你回答
 - 答错就记录坑点并安排更近的复看
 - 答对再安排更远的复看
@@ -148,10 +145,11 @@ python scripts/scan_reviews.py --vault LearningVault --date 2026-06-24
 
 ```powershell
 python scripts/add_review.py `
-  --progress LearningVault/topics/HTTPS/progress.md `
+  --review-plan LearningVault/topics/HTTPS/复习计划.md `
   --date 2026-06-25 `
   --content "HTTPS lesson 01" `
-  --reason "首次学习后复看"
+  --reason "首次学习后复看" `
+  --pitfall "公钥加密误解"
 ```
 
 ## 不做什么

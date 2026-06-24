@@ -1,16 +1,16 @@
-# Lightweight Progress Template
+# Learning Route Template
 
-Progress is a state tracker, not a knowledge note.
+`学习路线.md` is a route and status file, not a knowledge note.
 
 ````markdown
 ---
-type: progress
+type: learning-route
 topic: [主题]
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 
-# [主题] 进度
+# [主题] 学习路线
 
 ## 当前状态
 
@@ -31,15 +31,4 @@ updated: YYYY-MM-DD
 - [ ] 写当前 lesson 对应的个人 note
 - [ ] 完成下一次互动检查
 - [ ] 修正 fact check 中的错误
-
-## 坑点记录
-
-| 日期 | 来源 | 坑点 | 正确边界 | 下次检查 |
-| --- | --- | --- | --- | --- |
-
-## 轻量复看
-
-| 日期 | 状态 | 内容 | 触发原因 |
-| --- | --- | --- | --- |
-
 ````

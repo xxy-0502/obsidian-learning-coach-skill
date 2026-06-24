@@ -6,7 +6,7 @@ Use when the user gives a topic or asks for courseware.
 
 1. Identify the topic and the intended outcome.
 2. If the user's level is unknown, ask at most two questions. If they say "直接开始", assume beginner.
-3. Create a lightweight plan in `progress.md` before the first lesson when writing files.
+3. Create `学习路线.md`, `错题遗漏.md`, and `复习计划.md` before the first lesson when writing files.
 4. Generate one sparse lesson only: the first item in the plan.
 5. If writing files, place the lesson under:
 
@@ -41,9 +41,10 @@ The lesson must not contain complete personal understanding, polished summaries,
 
 ## Plan Contract
 
-`progress.md` must include:
+The three state files must include:
 
-- 3-7 planned lessons or checkpoints, depending on topic size
-- for each item: status, target, lesson file, interaction, note task, review trigger
-- likely pitfalls before learning starts
-- exact next action
+- `学习路线.md`: 3-7 planned lessons or checkpoints, depending on topic size
+- `学习路线.md`: for each item, status, target, lesson file, interaction, note task, review trigger
+- `错题遗漏.md`: likely pitfalls before learning starts, then real mistakes as they happen
+- `复习计划.md`: exact review dates and review status
+- `学习路线.md`: exact next action

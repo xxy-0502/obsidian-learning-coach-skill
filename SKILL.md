@@ -13,7 +13,7 @@ The learning boundary is strict:
 - The user writes `notes/`: personal explanations, analogies, diagrams, summaries, and reflections.
 - AI fact-checks user notes: definitions, causal links, arrows, formulas, boundaries, and missing necessary conditions.
 - AI runs `interactions/`: short checkpoints where the user answers first and AI corrects only the attempted content.
-- AI maintains `progress.md`: learning plan, current lesson, note status, review queue, failed checks, pitfalls, and next action.
+- AI maintains three lightweight state files: `学习路线.md`, `错题遗漏.md`, and `复习计划.md`.
 
 The goal is not to make the user passively read a complete explanation. The goal is to give the user enough raw material and constraints to reconstruct understanding personally.
 
@@ -25,7 +25,7 @@ The goal is not to make the user passively read a complete explanation. The goal
 4. Every lesson must include an action that forces reconstruction: draw, restate, compare, classify, or predict an error.
 5. If the user asks for fact checking, only check facts. Do not polish, summarize, reorganize, or rewrite.
 6. In interactive mode, ask before explaining. The user must attempt the answer first.
-7. When the user names a topic, create a lightweight plan first and follow it lesson by lesson.
+7. When the user names a topic, create `学习路线.md` first and follow it lesson by lesson.
 8. Maintain review and pitfall tracking, but keep them lightweight. Do not build dashboards, heavy spaced-review systems, or knowledge maps.
 9. Use Chinese by default, with English terms in parentheses when useful.
 10. Do not fabricate sources, page numbers, URLs, quotations, or citations.
@@ -43,7 +43,9 @@ LearningVault/
       notes/
       checks/
       interactions/
-      progress.md
+      学习路线.md
+      错题遗漏.md
+      复习计划.md
 ```
 
 Meaning:
@@ -52,9 +54,11 @@ Meaning:
 - `notes/`: user-owned notes. AI may create only `README.md` as a boundary marker.
 - `checks/`: fact-check records for user notes.
 - `interactions/`: checkpoint questions, user answers, corrections, and pass/fail decisions.
-- `progress.md`: lightweight learning state and next action.
+- `学习路线.md`: ordered plan, current lesson, note task, and next action.
+- `错题遗漏.md`: pitfalls, repeated errors, missing conditions, and correction boundaries.
+- `复习计划.md`: review queue and review outcomes.
 
-If the user already has an older vault shaped as `LearningVault/notes/[topic]/`, keep using that path and create `lessons/`, `notes/`, `checks/`, `interactions/`, and `progress.md` under it. Do not migrate folders unless the user asks.
+If the user already has an older vault shaped as `LearningVault/notes/[topic]/`, keep using that path and create `lessons/`, `notes/`, `checks/`, `interactions/`, `学习路线.md`, `错题遗漏.md`, and `复习计划.md` under it. Do not migrate folders unless the user asks.
 
 ## Request Routing
 
@@ -66,7 +70,7 @@ Use when the user says "我想学 X", "教我 X", "学习 X", or asks for course
    - 你现在是完全不懂、只听过，还是能说出一点？
    - 这次学习是为了面试、考试、项目，还是纯理解？
 2. If the user says "直接开始", assume beginner level and continue.
-3. Create a lightweight learning plan in `progress.md` before the first lesson when files are requested.
+3. Create a lightweight learning plan in `学习路线.md` before the first lesson when files are requested.
 4. The plan must list lesson order, target output, interaction checkpoint, note task, review dates, and likely pitfalls.
 5. Start with the first planned lesson only.
 6. Write AI courseware only to `lessons/`.
@@ -77,15 +81,13 @@ Use when the user says "我想学 X", "教我 X", "学习 X", or asks for course
 
 Use for continuing an existing topic.
 
-1. Read `progress.md` before generating new courseware or asking interaction questions.
+1. Read `学习路线.md`, `错题遗漏.md`, and `复习计划.md` before generating new courseware or asking interaction questions.
 2. Find the first unfinished item in `## 学习路线`.
 3. Work only on that item unless the user explicitly changes the plan.
 4. After a lesson, interaction, note check, or review, update:
-   - `## 当前状态`
-   - `## 学习路线`
-   - `## 待处理`
-   - `## 坑点记录`
-   - `## 轻量复看`
+   - `学习路线.md`: current status, route item, next action
+   - `错题遗漏.md`: pitfalls, repeated mistakes, missing conditions
+   - `复习计划.md`: due reviews and next review dates
 5. Do not skip ahead because the next topic is interesting.
 6. If the user is stuck, split the current planned item into smaller checkpoints instead of jumping forward.
 
@@ -152,7 +154,7 @@ Run one interaction loop at a time:
 4. Check the attempt for facts and missing conditions.
 5. If wrong, point out the smallest necessary correction. Do not give a full explanation unless the user asks.
 6. If correct, mark the checkpoint as passed and give the next small task.
-7. Update `progress.md` and optionally append an interaction record under `interactions/`.
+7. Update the three state files as needed and optionally append an interaction record under `interactions/`.
 
 Allowed interaction types:
 
@@ -167,12 +169,12 @@ The assistant must not answer its own question in the same turn.
 
 ### Review Route
 
-Use when the user asks "今天复习什么", "复习", "到期复看", or when `progress.md` has due review items.
+Use when the user asks "今天复习什么", "复习", "到期复看", or when `复习计划.md` has due review items.
 
-1. Read `progress.md`.
-2. Select due items from `## 轻量复看`.
+1. Read `复习计划.md`.
+2. Select due items from `## 复习队列`.
 3. Start with active recall or error-spotting. Do not re-explain first.
-4. Prioritize items from `## 坑点记录` and failed interactions.
+4. Prioritize items from `错题遗漏.md` and failed interactions.
 5. After the user answers, fact-check the attempt.
 6. If passed, schedule the next review date.
 7. If failed, add or update a pitfall and schedule a nearer review.
@@ -222,22 +224,21 @@ If the user asks "帮我写我的笔记", answer by creating a lesson and a note
 - notes: user writes their own explanation, diagram, analogy, and reflection
 - checks: AI can verify after the user writes
 
-## Lightweight Progress
+## Lightweight State Files
 
-Use `references/templates/progress.md` when maintaining progress.
+Use these templates when maintaining state:
 
-Progress is not a knowledge summary. It only tracks:
+- `references/templates/learning-route.md`
+- `references/templates/mistakes.md`
+- `references/templates/review-plan.md`
 
-- planned lesson order
-- current lesson
-- whether the user note exists
-- last interaction status
-- review queue
-- pitfalls and failed checks
-- unresolved errors or missing conditions
-- next action
+The state files are not knowledge summaries.
 
-Do not write concept explanations into `progress.md`.
+- `学习路线.md` tracks planned lesson order, current lesson, note task, and next action.
+- `错题遗漏.md` tracks pitfalls, failed checks, repeated errors, and missing conditions.
+- `复习计划.md` tracks due review items, status, review outcomes, and next review dates.
+
+Do not write concept explanations into the state files.
 
 ## Failure Handling
 
@@ -250,9 +251,9 @@ Do not write concept explanations into `progress.md`.
 | User asks for interactive learning without a lesson | Create or propose a sparse lesson first, then start checkpoint 1 |
 | User answers incorrectly | Identify the smallest factual boundary or missing condition, then ask a follow-up |
 | User answers correctly | Mark the checkpoint passed and move to the next task |
-| User wants to continue a topic | Read `progress.md` and continue the first unfinished planned item |
+| User wants to continue a topic | Read the three state files and continue the first unfinished planned item |
 | Review item is due | Start with recall or error-spotting; do not explain first |
-| User repeats an error | Add it to `## 坑点记录` and schedule a nearer review |
+| User repeats an error | Add it to `错题遗漏.md` and schedule a nearer review in `复习计划.md` |
 | Source or fact is uncertain | Mark it as needing verification instead of inventing certainty |
 | High-risk topic | Keep to conceptual learning and include a professional-advice boundary |
 
