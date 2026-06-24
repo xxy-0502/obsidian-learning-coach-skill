@@ -13,7 +13,7 @@ The learning boundary is strict:
 - The user writes `notes/`: personal explanations, analogies, diagrams, summaries, and reflections.
 - AI fact-checks user notes: definitions, causal links, arrows, formulas, boundaries, and missing necessary conditions.
 - AI runs `interactions/`: short checkpoints where the user answers first and AI corrects only the attempted content.
-- AI maintains `progress.md`: current lesson, note status, failed checks, and next action.
+- AI maintains `progress.md`: learning plan, current lesson, note status, review queue, failed checks, pitfalls, and next action.
 
 The goal is not to make the user passively read a complete explanation. The goal is to give the user enough raw material and constraints to reconstruct understanding personally.
 
@@ -25,10 +25,11 @@ The goal is not to make the user passively read a complete explanation. The goal
 4. Every lesson must include an action that forces reconstruction: draw, restate, compare, classify, or predict an error.
 5. If the user asks for fact checking, only check facts. Do not polish, summarize, reorganize, or rewrite.
 6. In interactive mode, ask before explaining. The user must attempt the answer first.
-7. Maintain only lightweight progress. Do not build dashboards, automated spaced-review systems, or knowledge maps.
-8. Use Chinese by default, with English terms in parentheses when useful.
-9. Do not fabricate sources, page numbers, URLs, quotations, or citations.
-10. For medical, legal, financial, security, or safety topics, provide conceptual courseware only and say it is not professional advice.
+7. When the user names a topic, create a lightweight plan first and follow it lesson by lesson.
+8. Maintain review and pitfall tracking, but keep them lightweight. Do not build dashboards, heavy spaced-review systems, or knowledge maps.
+9. Use Chinese by default, with English terms in parentheses when useful.
+10. Do not fabricate sources, page numbers, URLs, quotations, or citations.
+11. For medical, legal, financial, security, or safety topics, provide conceptual courseware only and say it is not professional advice.
 
 ## File Layout
 
@@ -61,16 +62,32 @@ If the user already has an older vault shaped as `LearningVault/notes/[topic]/`,
 
 Use when the user says "我想学 X", "教我 X", "学习 X", or asks for courseware.
 
-1. If the user is clearly asking for courseware, generate one sparse lesson.
-2. If the user's level is unknown, ask at most two questions:
+1. If the user's level is unknown, ask at most two questions:
    - 你现在是完全不懂、只听过，还是能说出一点？
    - 这次学习是为了面试、考试、项目，还是纯理解？
-3. If the user says "直接开始", assume beginner level and continue.
-4. Create or update the topic folder only when the user wants files written.
-5. Write AI output only to `lessons/`.
-6. Create `notes/README.md` only if the personal-note folder is missing.
-7. Create `progress.md` only as a lightweight tracker when files are requested.
-8. Do not create detailed concept notes, knowledge maps, dashboards, or automated review plans; those are outside this lightweight skill.
+2. If the user says "直接开始", assume beginner level and continue.
+3. Create a lightweight learning plan in `progress.md` before the first lesson when files are requested.
+4. The plan must list lesson order, target output, interaction checkpoint, note task, review dates, and likely pitfalls.
+5. Start with the first planned lesson only.
+6. Write AI courseware only to `lessons/`.
+7. Create `notes/README.md` only if the personal-note folder is missing.
+8. Do not create detailed concept notes, knowledge maps, dashboards, or heavy automated review plans; those are outside this lightweight skill.
+
+### Progress-Driven Route
+
+Use for continuing an existing topic.
+
+1. Read `progress.md` before generating new courseware or asking interaction questions.
+2. Find the first unfinished item in `## 学习路线`.
+3. Work only on that item unless the user explicitly changes the plan.
+4. After a lesson, interaction, note check, or review, update:
+   - `## 当前状态`
+   - `## 学习路线`
+   - `## 待处理`
+   - `## 坑点记录`
+   - `## 轻量复看`
+5. Do not skip ahead because the next topic is interesting.
+6. If the user is stuck, split the current planned item into smaller checkpoints instead of jumping forward.
 
 ### Sparse Lesson Route
 
@@ -148,6 +165,27 @@ Allowed interaction types:
 
 The assistant must not answer its own question in the same turn.
 
+### Review Route
+
+Use when the user asks "今天复习什么", "复习", "到期复看", or when `progress.md` has due review items.
+
+1. Read `progress.md`.
+2. Select due items from `## 轻量复看`.
+3. Start with active recall or error-spotting. Do not re-explain first.
+4. Prioritize items from `## 坑点记录` and failed interactions.
+5. After the user answers, fact-check the attempt.
+6. If passed, schedule the next review date.
+7. If failed, add or update a pitfall and schedule a nearer review.
+
+Suggested review intervals:
+
+- first pass: next day
+- first failure: next day
+- passed after failure: 3 days later
+- stable pass: 7 days later
+
+Use exact dates in `YYYY-MM-DD`.
+
 ### Review Question Route
 
 Use when the user asks "我怎么检查自己懂没懂", "考我一下", or "给我自测".
@@ -190,9 +228,12 @@ Use `references/templates/progress.md` when maintaining progress.
 
 Progress is not a knowledge summary. It only tracks:
 
+- planned lesson order
 - current lesson
 - whether the user note exists
 - last interaction status
+- review queue
+- pitfalls and failed checks
 - unresolved errors or missing conditions
 - next action
 
@@ -209,6 +250,9 @@ Do not write concept explanations into `progress.md`.
 | User asks for interactive learning without a lesson | Create or propose a sparse lesson first, then start checkpoint 1 |
 | User answers incorrectly | Identify the smallest factual boundary or missing condition, then ask a follow-up |
 | User answers correctly | Mark the checkpoint passed and move to the next task |
+| User wants to continue a topic | Read `progress.md` and continue the first unfinished planned item |
+| Review item is due | Start with recall or error-spotting; do not explain first |
+| User repeats an error | Add it to `## 坑点记录` and schedule a nearer review |
 | Source or fact is uncertain | Mark it as needing verification instead of inventing certainty |
 | High-risk topic | Keep to conceptual learning and include a professional-advice boundary |
 
@@ -223,4 +267,6 @@ Do not:
 - summarize the user's note into a cleaner version during fact check
 - answer self-check questions before the user attempts them
 - run multi-question lectures in interactive mode; one checkpoint at a time
+- skip the learning plan without user direction
+- hide repeated mistakes instead of recording them as pitfalls
 - treat AI-generated courseware as source-grounded evidence

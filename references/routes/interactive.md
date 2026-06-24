@@ -14,7 +14,7 @@ One checkpoint per turn. The user answers first.
 4. After the user answers, check only the attempted content.
 5. If correct, say the checkpoint passed and give the next checkpoint.
 6. If incorrect, identify the smallest error or missing condition, then ask a follow-up.
-7. Update `progress.md` when file writing is in scope.
+7. Update `progress.md` when file writing is in scope: current status, route item, pitfall, review queue, next action.
 8. Append an interaction record under `interactions/` only when the user wants durable logs.
 
 ## Interaction Types

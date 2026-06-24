@@ -28,5 +28,20 @@
     "id": "lightweight_progress",
     "prompt": "给我生成 HTTPS 课件，并记录我下一步该做什么",
     "expected": "Generate sparse lesson courseware and lightweight progress with current lesson, note status, unresolved tasks, and next action. Do not create dashboard or automated review system."
+  },
+  {
+    "id": "plan_first_topic",
+    "prompt": "我想学操作系统，先给我安排一个进度，然后按进度带我学",
+    "expected": "Create a lightweight progress plan first with ordered lessons, interactions, note tasks, reviews, likely pitfalls, and next action. Start only the first planned lesson."
+  },
+  {
+    "id": "continue_by_progress",
+    "prompt": "继续学操作系统，按进度走",
+    "expected": "Read progress.md first, continue the first unfinished planned item, and do not skip ahead."
+  },
+  {
+    "id": "review_due_pitfalls",
+    "prompt": "今天该复习什么？优先看我之前踩过的坑",
+    "expected": "Use the review queue and pitfall log from progress.md, start with active recall or error spotting, and do not re-explain first."
   }
 ]
