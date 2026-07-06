@@ -46,7 +46,6 @@ def load_config(vault: Path, explicit_env: str | None) -> dict[str, str]:
     for key in [
         "MINERU_API_KEY",
         "MINERU_TOKEN",
-        "MARKDOWN_CONVERTER",
         "MINERU_API_BASE",
         "MINERU_API_URL",
         "MINERU_LANGUAGE",
@@ -60,7 +59,6 @@ def load_config(vault: Path, explicit_env: str | None) -> dict[str, str]:
     ]:
         if os.environ.get(key):
             config[key] = os.environ[key]
-    config.setdefault("MARKDOWN_CONVERTER", "mineru-precise")
     config.setdefault("MINERU_API_BASE", "https://mineru.net")
     return config
 
@@ -160,66 +158,6 @@ def merge_part_markdown(parts: list[tuple[Path, int, int, Path]], output: Path, 
     output.write_text("\n".join(chunks), encoding="utf-8")
 
 
-def mineru_agent_convert(src: Path, output: Path, config: dict[str, str]) -> tuple[bool, str]:
-    api_base = config.get("MINERU_API_BASE", "https://mineru.net").rstrip("/")
-    create_url = config.get("MINERU_API_URL") or f"{api_base}/api/v1/agent/parse/file"
-    try:
-        import requests  # type: ignore
-    except Exception:
-        return False, "The requests package is required for MinerU Agent API conversion."
-
-    payload = {
-        "file_name": src.name,
-        "language": config.get("MINERU_LANGUAGE", "ch"),
-        "enable_table": config.get("MINERU_ENABLE_TABLE", "true").lower() != "false",
-        "is_ocr": config.get("MINERU_IS_OCR", "false").lower() == "true",
-        "enable_formula": config.get("MINERU_ENABLE_FORMULA", "true").lower() != "false",
-    }
-    if config.get("MINERU_PAGE_RANGE"):
-        payload["page_range"] = config["MINERU_PAGE_RANGE"]
-
-    response = requests.post(create_url, json=payload, timeout=60)
-    if response.status_code >= 400:
-        return False, f"MinerU task creation failed with HTTP {response.status_code}: {response.text[:500]}"
-    data = response.json()
-    if data.get("code") != 0:
-        return False, f"MinerU task creation failed: {data.get('msg') or data}"
-    task = data.get("data", {})
-    task_id = task.get("task_id")
-    file_url = task.get("file_url")
-    if not task_id or not file_url:
-        return False, f"MinerU response did not include task_id/file_url: {data}"
-
-    # Signed OSS upload URL must be used exactly as returned by MinerU.
-    with src.open("rb") as fh:
-        upload_response = requests.put(file_url, data=fh, timeout=120)
-    if upload_response.status_code >= 400:
-        return False, f"MinerU file upload failed with HTTP {upload_response.status_code}: {upload_response.text[:500]}"
-
-    result_url = f"{api_base}/api/v1/agent/parse/{task_id}"
-    for _ in range(int(config.get("MINERU_POLL_COUNT", "60"))):
-        result_response = requests.get(result_url, timeout=30)
-        if result_response.status_code >= 400:
-            return False, f"MinerU result query failed with HTTP {result_response.status_code}: {result_response.text[:500]}"
-        result = result_response.json()
-        result_data = result.get("data", {})
-        state = result_data.get("state")
-        if state == "done":
-            markdown_url = result_data.get("markdown_url")
-            if not markdown_url:
-                return False, f"MinerU result is done but markdown_url is missing: {result}"
-            markdown_response = requests.get(markdown_url, timeout=60)
-            if markdown_response.status_code >= 400:
-                return False, f"MinerU Markdown download failed with HTTP {markdown_response.status_code}: {markdown_response.text[:500]}"
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(markdown_response.text, encoding="utf-8")
-            return True, str(output)
-        if state == "failed":
-            return False, f"MinerU parsing failed: {result_data.get('err_msg') or result}"
-        time.sleep(float(config.get("MINERU_POLL_INTERVAL", "2")))
-    return False, f"MinerU parsing did not finish before timeout. task_id={task_id}"
-
-
 def extract_mineru_zip(zip_bytes: bytes, output: Path, preferred_stem: str) -> None:
     with zipfile.ZipFile(BytesIO(zip_bytes)) as archive:
         names = archive.namelist()
@@ -255,7 +193,7 @@ def bearer_headers(config: dict[str, str]) -> dict[str, str]:
     if not token:
         raise ValueError(
             "Missing MINERU_TOKEN. Configure LearningVault/settings/.env, pass --env, "
-            "set a system environment variable, provide Markdown/text, or switch to MARKDOWN_CONVERTER=mineru-agent."
+            "set a system environment variable, or provide Markdown/text. Complex-file conversion must use MinerU precise."
         )
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
@@ -439,14 +377,12 @@ def main() -> None:
         print(result)
         return
     if ext not in COMPLEX_EXTS:
-        print(f"Unsupported file extension: {ext}. Provide Markdown/text or add converter support.", file=sys.stderr)
+        print(f"Unsupported file extension: {ext}. Provide PDF/image/Office/Markdown/text.", file=sys.stderr)
         sys.exit(3)
 
     config = load_config(vault, args.env)
-    converter = config.get("MARKDOWN_CONVERTER", "mineru-precise").lower()
     if (
-        converter in {"mineru-precise", "mineru_precise"}
-        and ext == ".pdf"
+        ext == ".pdf"
         and not args.no_auto_split
         and args.split_pages > 0
     ):
@@ -461,13 +397,7 @@ def main() -> None:
                 sys.exit(5)
             return
 
-    if converter in {"mineru", "mineru-agent", "mineru_agent"}:
-        ok, message = mineru_agent_convert(src, output, config)
-    elif converter in {"mineru-precise", "mineru_precise"}:
-        ok, message = mineru_precise_convert(src, output, config)
-    else:
-        print(f"Unsupported MARKDOWN_CONVERTER: {config.get('MARKDOWN_CONVERTER')}", file=sys.stderr)
-        sys.exit(4)
+    ok, message = mineru_precise_convert(src, output, config)
     print(message)
     if not ok:
         sys.exit(5)

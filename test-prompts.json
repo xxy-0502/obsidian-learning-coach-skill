@@ -1,0 +1,57 @@
+[
+  {
+    "id": "new_topic_zero_base",
+    "prompt": "我完全不懂 HTTPS，给我课件，不要给我笔记",
+    "expected": "Generate sparse lesson courseware with prerequisite definitions, principle skeleton, misconceptions, diagram task, and self-check questions. Do not generate personal notes or long explanations."
+  },
+  {
+    "id": "forbid_personal_note",
+    "prompt": "帮我写一份我自己的 TCP 三次握手 Obsidian 笔记",
+    "expected": "Refuse to write the user's personal note. Generate courseware and a note-writing task instead."
+  },
+  {
+    "id": "definition_principle_only",
+    "prompt": "讲讲操作系统进程和线程，但不要解释太细",
+    "expected": "Provide definitions, principle skeleton, boundaries, misconceptions, and self-check prompts without long explanatory prose."
+  },
+  {
+    "id": "fact_check_only",
+    "prompt": "这是我的笔记：HTTPS 就是 HTTP 加了非对称加密，所以所有数据都只用公钥加密。请只检查事实错误，不要润色。",
+    "expected": "Only identify factual errors and missing boundaries. Do not rewrite or polish the note."
+  },
+  {
+    "id": "interactive_one_checkpoint",
+    "prompt": "用交互式学习带我学 HTTPS，每次只问我一个问题，我回答后你再检查",
+    "expected": "Start one checkpoint only, wait for the user's answer, and do not answer the question in the same turn."
+  },
+  {
+    "id": "lightweight_progress",
+    "prompt": "给我生成 HTTPS 课件，并记录我下一步该做什么",
+    "expected": "Generate sparse lesson courseware and update the three lightweight state files: 学习路线.md, 错题遗漏.md, and 复习计划.md. Do not create dashboard or heavy review system."
+  },
+  {
+    "id": "plan_first_topic",
+    "prompt": "我想学操作系统，先给我安排一个进度，然后按进度带我学",
+    "expected": "Create 学习路线.md, 错题遗漏.md, and 复习计划.md first with ordered lessons, interactions, note tasks, reviews, likely pitfalls, and next action. Start only the first planned lesson."
+  },
+  {
+    "id": "continue_by_progress",
+    "prompt": "继续学操作系统，按进度走",
+    "expected": "Read 学习路线.md, 错题遗漏.md, and 复习计划.md first, continue the first unfinished planned item, and do not skip ahead."
+  },
+  {
+    "id": "review_due_pitfalls",
+    "prompt": "今天该复习什么？优先看我之前踩过的坑",
+    "expected": "Use 复习计划.md and 错题遗漏.md, start with active recall or error spotting, and do not re-explain first."
+  },
+  {
+    "id": "mineru_forced_conversion",
+    "prompt": "把这个 PDF 用 MinerU 转成 Markdown，然后基于它给我 lesson",
+    "expected": "Use scripts/convert_to_markdown.py with MinerU precise only, write full.md under LearningVault/inbox/converted/[source]/, and use that Markdown as lesson raw material. Do not use alternative converters."
+  },
+  {
+    "id": "mineru_missing_token",
+    "prompt": "我给你一个 PPT，但是没有配置 MinerU token，先帮我转换",
+    "expected": "Stop and ask the user to configure MINERU_TOKEN or provide Markdown/text. Do not fall back to another converter."
+  }
+]
