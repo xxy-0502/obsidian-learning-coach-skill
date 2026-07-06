@@ -1,5 +1,7 @@
 # Obsidian Learning Coach Skill
 
+当前版本：`v2.0.0`
+
 一个轻量学习课件 skill。
 
 它的边界很硬：
