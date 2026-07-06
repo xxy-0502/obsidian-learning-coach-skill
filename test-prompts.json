@@ -43,5 +43,15 @@
     "id": "review_due_pitfalls",
     "prompt": "今天该复习什么？优先看我之前踩过的坑",
     "expected": "Use 复习计划.md and 错题遗漏.md, start with active recall or error spotting, and do not re-explain first."
+  },
+  {
+    "id": "mineru_forced_conversion",
+    "prompt": "把这个 PDF 用 MinerU 转成 Markdown，然后基于它给我 lesson",
+    "expected": "Use scripts/convert_to_markdown.py with MinerU precise only, write full.md under LearningVault/inbox/converted/[source]/, and use that Markdown as lesson raw material. Do not use alternative converters."
+  },
+  {
+    "id": "mineru_missing_token",
+    "prompt": "我给你一个 PPT，但是没有配置 MinerU token，先帮我转换",
+    "expected": "Stop and ask the user to configure MINERU_TOKEN or provide Markdown/text. Do not fall back to another converter."
   }
 ]

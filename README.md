@@ -9,6 +9,7 @@
 - AI 生成 `checks/` 或聊天反馈：只做事实核查，不润色、不重写。
 - AI 通过 `interactions/` 做交互式检查：一题一答，先让用户尝试，再纠偏。
 - AI 维护三份轻量状态文件：`学习路线.md`、`错题遗漏.md`、`复习计划.md`。
+- AI 转换复杂资料时强制使用 MinerU precise，不支持切换其他转换器。
 
 这个 skill 不追求让 AI 把知识讲到顺滑可读。它追求让用户必须亲手重构理解。
 
@@ -38,6 +39,10 @@
 今天该复习什么？
 ```
 
+```text
+把这个 PDF 用 MinerU 转成 Markdown，然后基于它给我 lesson
+```
+
 ## 默认目录
 
 ```text
@@ -51,6 +56,11 @@ LearningVault/
       学习路线.md
       错题遗漏.md
       复习计划.md
+  inbox/
+    待处理资料/
+    converted/
+      [source]/
+        full.md
 ```
 
 ## lesson 是什么
@@ -125,6 +135,33 @@ LearningVault/
 
 学习时必须先看这三份文件，按 `学习路线.md` 第一条未完成项目继续。
 
+## conversion 是什么
+
+PDF、图片、Word、PPT 等复杂资料必须先用 MinerU precise 转成 Markdown：
+
+```powershell
+python scripts/convert_to_markdown.py `
+  --input "LearningVault/inbox/待处理资料/example.pdf" `
+  --vault "LearningVault"
+```
+
+默认输出：
+
+```text
+LearningVault/inbox/converted/example/full.md
+```
+
+配置 `MINERU_TOKEN`：
+
+```env
+MINERU_TOKEN=your_token
+MINERU_API_BASE=https://mineru.net
+MINERU_LANGUAGE=ch
+MINERU_MODEL_VERSION=vlm
+```
+
+不支持 `MARKDOWN_CONVERTER` 切换。MinerU 失败时停止，要求配置 MinerU、提供 Markdown/text，或修复错误后重试。
+
 ## review 是什么
 
 复习不是重新讲课，而是到期后先考你：
@@ -156,7 +193,6 @@ python scripts/add_review.py `
 
 默认不做：
 
-- 长资料转换
 - PDF 拆章
 - 知识地图维护
 - dashboard

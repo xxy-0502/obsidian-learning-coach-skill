@@ -1,6 +1,6 @@
 ---
 name: obsidian-learning-coach
-description: Lightweight Obsidian courseware and interactive learning coach. Use when the user wants to learn a topic, generate sparse lesson courseware, answer checkpoint questions, keep AI output separate from personal notes, track lightweight progress, or fact-check user-written notes without rewriting them. Trigger on "我想学 X", "给我课件", "交互式学习", "考我一下", "不要笔记", "只检查事实", "手写笔记", "Obsidian 笔记", "fact check notes".
+description: Lightweight Obsidian courseware and interactive learning coach. Use when the user wants to learn a topic, convert source material with MinerU, generate sparse lesson courseware, answer checkpoint questions, keep AI output separate from personal notes, track lightweight progress, or fact-check user-written notes without rewriting them. Trigger on "我想学 X", "给我课件", "转换资料", "PDF 转 Markdown", "MinerU", "交互式学习", "考我一下", "不要笔记", "只检查事实", "手写笔记", "Obsidian 笔记", "fact check notes".
 ---
 
 # Obsidian Learning Coach
@@ -14,6 +14,7 @@ The learning boundary is strict:
 - AI fact-checks user notes: definitions, causal links, arrows, formulas, boundaries, and missing necessary conditions.
 - AI runs `interactions/`: short checkpoints where the user answers first and AI corrects only the attempted content.
 - AI maintains three lightweight state files: `学习路线.md`, `错题遗漏.md`, and `复习计划.md`.
+- AI converts complex source files with MinerU precise only, then uses the converted Markdown as lesson raw material.
 
 The goal is not to make the user passively read a complete explanation. The goal is to give the user enough raw material and constraints to reconstruct understanding personally.
 
@@ -29,7 +30,8 @@ The goal is not to make the user passively read a complete explanation. The goal
 8. Maintain review and pitfall tracking, but keep them lightweight. Do not build dashboards, heavy spaced-review systems, or knowledge maps.
 9. Use Chinese by default, with English terms in parentheses when useful.
 10. Do not fabricate sources, page numbers, URLs, quotations, or citations.
-11. For medical, legal, financial, security, or safety topics, provide conceptual courseware only and say it is not professional advice.
+11. Complex-file conversion must use MinerU precise through `scripts/convert_to_markdown.py`. Do not use fallback converters.
+12. For medical, legal, financial, security, or safety topics, provide conceptual courseware only and say it is not professional advice.
 
 ## File Layout
 
@@ -46,6 +48,11 @@ LearningVault/
       学习路线.md
       错题遗漏.md
       复习计划.md
+  inbox/
+    待处理资料/
+    converted/
+      [source]/
+        full.md
 ```
 
 Meaning:
@@ -57,6 +64,8 @@ Meaning:
 - `学习路线.md`: ordered plan, current lesson, note task, and next action.
 - `错题遗漏.md`: pitfalls, repeated errors, missing conditions, and correction boundaries.
 - `复习计划.md`: review queue and review outcomes.
+- `inbox/待处理资料/`: raw user material.
+- `inbox/converted/[source]/full.md`: MinerU-converted Markdown used as courseware source material.
 
 If the user already has an older vault shaped as `LearningVault/notes/[topic]/`, keep using that path and create `lessons/`, `notes/`, `checks/`, `interactions/`, `学习路线.md`, `错题遗漏.md`, and `复习计划.md` under it. Do not migrate folders unless the user asks.
 
@@ -76,6 +85,25 @@ Use when the user says "我想学 X", "教我 X", "学习 X", or asks for course
 6. Write AI courseware only to `lessons/`.
 7. Create `notes/README.md` only if the personal-note folder is missing.
 8. Do not create detailed concept notes, knowledge maps, dashboards, or heavy automated review plans; those are outside this lightweight skill.
+
+### MinerU Conversion Route
+
+Use when the user provides a PDF, image, Office file, or asks to convert material.
+
+1. Store raw material under `LearningVault/inbox/待处理资料/` when file movement is in scope.
+2. Convert complex files with:
+
+```powershell
+python scripts/convert_to_markdown.py --input "[path]" --vault "LearningVault"
+```
+
+3. The canonical converted output is `LearningVault/inbox/converted/[source]/full.md`.
+4. After conversion, use `full.md` as raw material for sparse lessons.
+5. Do not create source indexes, chapter indexes, knowledge maps, or detailed concept notes by default.
+6. Do not use non-MinerU converters. If MinerU credentials are missing or MinerU fails, stop and ask for one of:
+   - configure `MINERU_TOKEN`
+   - provide Markdown/text
+   - retry MinerU after fixing the error
 
 ### Progress-Driven Route
 
@@ -254,6 +282,8 @@ Do not write concept explanations into the state files.
 | User wants to continue a topic | Read the three state files and continue the first unfinished planned item |
 | Review item is due | Start with recall or error-spotting; do not explain first |
 | User repeats an error | Add it to `错题遗漏.md` and schedule a nearer review in `复习计划.md` |
+| Complex source file is provided | Convert with MinerU precise before lesson generation |
+| MinerU token is missing or conversion fails | Stop; ask for MinerU configuration, Markdown/text, or retry after the error is fixed |
 | Source or fact is uncertain | Mark it as needing verification instead of inventing certainty |
 | High-risk topic | Keep to conceptual learning and include a professional-advice boundary |
 
@@ -270,4 +300,6 @@ Do not:
 - run multi-question lectures in interactive mode; one checkpoint at a time
 - skip the learning plan without user direction
 - hide repeated mistakes instead of recording them as pitfalls
+- use non-MinerU converters for complex files
+- continue from an unreadable PDF/image/Office file without converting it or receiving text
 - treat AI-generated courseware as source-grounded evidence

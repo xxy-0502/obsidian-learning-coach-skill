@@ -7,6 +7,7 @@ Load this index only when the route is unclear.
 | User intent | Load |
 | --- | --- |
 | New topic or courseware request | `references/routes/topic-first.md` |
+| Convert source material | `references/routes/conversion.md` |
 | Continue a planned topic | `references/routes/route-driven.md` |
 | Lesson response shape | `references/routes/session-output.md` |
 | Interactive checkpoint learning | `references/routes/interactive.md` |
@@ -16,6 +17,7 @@ Load this index only when the route is unclear.
 ## Composition
 
 - For a new lesson, load `topic-first.md`, then `session-output.md`.
+- For PDF/image/Office material, load `conversion.md` first, convert with MinerU, then use converted Markdown as lesson raw material.
 - For continuing a topic, load `route-driven.md` before generating any new lesson or checkpoint.
 - For interactive learning, load `interactive.md`; if no lesson exists, create or propose one sparse lesson first.
 - For review, load `review.md` and prioritize due items from `复习计划.md` and pitfalls from `错题遗漏.md`.
